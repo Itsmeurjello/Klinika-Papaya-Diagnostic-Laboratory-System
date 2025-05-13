@@ -181,7 +181,7 @@ require_once '../../config/database.php';
                     timer: 1500,
                     showConfirmButton: false
                 }).then(() => {
-                    window.location.href = result.redirect || '/index.php';
+                    window.location.href = "/Klinika-Papaya-Diagnostic-Laboratory-System" + result.redirect || '/Klinika-Papaya-Diagnostic-Laboratory-System/index.php';
                 });
             } else {
                 Swal.fire({

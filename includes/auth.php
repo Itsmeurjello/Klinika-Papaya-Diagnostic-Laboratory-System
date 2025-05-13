@@ -3,18 +3,15 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-/**
- * Check if user is authenticated
- * If not, redirect to login page
- * 
- * @return void
- */
+require_once __DIR__ . '/../config/config.php';
+
 function checkAuth() {
     if (!isset($_SESSION['username'])) {
         // Store the requested URL for redirection after login
         $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];
+        echo 'base path' . BASE_PATH ;
         
-        header("Location: ../views/auth/login.php");
+        header("Location: " . BASE_PATH  . "../views/auth/login.php");
         exit();
     }
 }
@@ -31,8 +28,8 @@ function checkAdmin() {
     if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
         $_SESSION['flash_message'] = "You don't have permission to access this page. Admin privileges required.";
         $_SESSION['flash_type'] = "error";
-        
-        header("Location: ../index.php");
+
+        header("Location: " . BASE_PATH . "index.php");
         exit();
     }
 }

@@ -3,8 +3,10 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
+require_once __DIR__ . '/../../config/config.php';
+
 if (!isset($_SESSION['username']) && basename($_SERVER['PHP_SELF']) != 'login.php') {
-    header("Location: /views/auth/login.php");
+    header("Location: " . BASE_PATH . "/views/auth/login.php");
     exit();
 }
 
@@ -66,20 +68,20 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <i class="bi bi-person-circle"></i> <?= htmlspecialchars($_SESSION['username'] ?? 'User') ?>
             </button>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
-                <li><a class="dropdown-item" href="/views/auth/profile.php">
+                <li><a class="dropdown-item" href="<?= BASE_PATH ?>/views/auth/profile.php">
                     <i class="bi bi-pencil-square"></i> Edit Profile
                 </a></li>
                 <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
-                <li><a class="dropdown-item" href="/views/auth/add_user.php">
+                <li><a class="dropdown-item" href="<?= BASE_PATH ?>/views/auth/add_user.php">
                     <i class="bi bi-person-plus"></i> Add User
                 </a></li>
                 <?php endif; ?>
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="/views/auth/logout.php" id="logoutBtn">
+                <li><a class="dropdown-item" href="<?= BASE_PATH ?>/views/auth/logout.php" id="logoutBtn">
                     <i class="bi bi-box-arrow-right"></i> Logout
                 </a></li>
             </ul>
         </div>
     </header>
 
-    <?php include __DIR__ . '/sidebar.php'; ?>
+    <?php include __DIR__ . '/sidebar.php'; ?> 
