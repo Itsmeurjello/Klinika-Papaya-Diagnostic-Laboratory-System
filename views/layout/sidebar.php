@@ -1,6 +1,6 @@
 <div class="sidebar">
     <div class="logo">
-        <img src="/assets/img/profile.jpg" alt="Logo">
+        <img src="../../assets/image/profile.jpg" alt="Logo">
         <h4 class="mt-2 text-center text-white">Klinika Papaya</h4>
     </div>
     
