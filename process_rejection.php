@@ -1,73 +1,116 @@
 <?php
 session_start();
+require_once 'config/db_connect.php';
+
 header('Content-Type: application/json');
 
-// Verify user is logged in
 if (!isset($_SESSION['username'])) {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
-    exit;
+    die(json_encode(['success' => false, 'message' => 'Unauthorized']));
 }
 
-// Verify CSRF token
 if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-    echo json_encode(['success' => false, 'message' => 'CSRF token validation failed']);
-    exit;
+    die(json_encode(['success' => false, 'message' => 'Invalid CSRF token']));
 }
 
-// Validate request ID
-if (!isset($_POST['request_id']) || !is_numeric($_POST['request_id'])) {
-    echo json_encode(['success' => false, 'message' => 'Invalid request ID']);
-    exit;
+$required = ['patient_id', 'test_name', 'station', 'sample_id'];
+foreach ($required as $field) {
+    if (empty($_POST[$field])) {
+        die(json_encode(['success' => false, 'message' => "Missing required field: $field"]));
+    }
 }
 
-$requestId = (int)$_POST['request_id'];
-$patientId = $_POST['patient_id'] ?? '';
+$patient_id = (int)$_POST['patient_id'];
+$test_name = htmlspecialchars($_POST['test_name']);
+$station = htmlspecialchars($_POST['station']);
+$sample_id = htmlspecialchars($_POST['sample_id']);
+$allowed_tests = ['CBC', 'Urinalysis', 'Blood Chemistry'];
 
-require_once 'config/db_connect.php';
+if (!in_array($test_name, $allowed_tests)) {
+    die(json_encode(['success' => false, 'message' => 'Invalid test selection']));
+}
+
+if (!preg_match('/^LAB-\d{6,}$/', $sample_id)) {
+    die(json_encode(['success' => false, 'message' => 'Invalid Sample ID format']));
+}
 
 try {
     $connect->beginTransaction();
 
-    // Update status to Rejected
-    $stmt = $connect->prepare("
-        UPDATE pending_requests 
-        SET status = 'Rejected', 
-            processed_at = NOW(),
-            processed_by = :user_id
-        WHERE id = :request_id
-        AND status = 'Pending'
-    ");
-    $stmt->bindParam(':request_id', $requestId, PDO::PARAM_INT);
-    $stmt->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
-    
-    if (!$stmt->execute()) {
-        throw new Exception("Failed to update request status");
+    $checkStmt = $connect->prepare("SELECT COUNT(*) FROM pending_requests WHERE sample_id = :sample_id");
+    $checkStmt->execute([':sample_id' => $sample_id]);
+    if ($checkStmt->fetchColumn() > 0) {
+        throw new Exception("Sample ID already exists in the system");
     }
 
-    // Optionally: Insert into a rejected_requests table if you have one
-    // [Add similar code to your approve process if needed]
+    $patientStmt = $connect->prepare("SELECT * FROM patients WHERE patient_id = :patient_id");
+    $patientStmt->execute([':patient_id' => $patient_id]);
+    $patient = $patientStmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$patient) {
+        throw new Exception("Patient not found");
+    }
 
+    $stmt = $connect->prepare("
+        INSERT INTO pending_requests (
+            date, patient_id, full_name, station, 
+            gender, age, birth_date, test_name, 
+            clinical_info, physician, status, requested_by,
+            sample_id
+        ) VALUES (
+            NOW(), 
+            :patient_id, 
+            :full_name, 
+            :station,
+            :gender, 
+            :age, 
+            :birth_date, 
+            :test_name,
+            :clinical_info,
+            :physician,
+            'Pending',
+            :requested_by,
+            :sample_id
+        )
+    ");
+
+    $stmt->execute([
+        ':patient_id' => $patient_id,
+        ':full_name' => $patient['full_name'],
+        ':station' => $station,
+        ':gender' => $patient['gender'],
+        ':age' => $patient['age'],
+        ':birth_date' => $patient['birth_date'],
+        ':test_name' => $test_name,
+        ':clinical_info' => $_POST['clinical_info'] ?? null,
+        ':physician' => $_POST['physician'] ?? null,
+        ':requested_by' => $_SESSION['username'],
+        ':sample_id' => $sample_id
+    ]);
+
+    $requestId = $connect->lastInsertId();
     $connect->commit();
 
     echo json_encode([
         'success' => true,
-        'message' => 'Request rejected successfully',
-        'patient_id' => $patientId
+        'message' => 'Request submitted successfully!',
+        'request_id' => $requestId,
+        'sample_id' => $sample_id
     ]);
 
 } catch (PDOException $e) {
     $connect->rollBack();
-    error_log("Rejection Error: " . $e->getMessage());
+    error_log("Request Error: " . $e->getMessage());
+    http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Database error occurred'
+        'message' => 'Database error occurred. Please try again.',
+        'error' => $e->getMessage()
     ]);
 } catch (Exception $e) {
     $connect->rollBack();
-    error_log("Rejection Error: " . $e->getMessage());
+    http_response_code(400);
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage()
     ]);
 }
-?>

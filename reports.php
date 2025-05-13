@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Reports</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/custom.css">
 
     <style>
         /* Sidebar Styles (same as patientlist.php) */
@@ -66,17 +65,14 @@
 </head>
 <body>
 
-    <!-- Sidebar -->
     <div class="sidebar">
         <?php include('sidebar.php'); ?>
     </div>
 
-    <!-- Main Content -->
     <div class="main-content p-4">
         <div class="container-fluid">
             <h2 class="mb-4">Reports Sales for that day</h2>
 
-            <!-- Button Section -->
             <div class="mb-4 d-flex flex-wrap justify-content-center gap-3">
                 <a href="income.php" class="btn btn-primary">Income</a>
                 <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#censusModal">Census</button>
@@ -84,7 +80,6 @@
                 <a href="consumption.php" class="btn btn-info text-white">Consumption</a>
             </div>
 
-            <!-- Placeholder Card -->
             <div class="card">
                 <div class="card-body">
                     <p>Select a category above to view records.</p>
@@ -93,7 +88,6 @@
         </div>
     </div>
 
-    <!-- Census Modal -->
     <div class="modal fade" id="censusModal" tabindex="-1" aria-labelledby="censusModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 shadow">
@@ -132,7 +126,6 @@
         </div>
     </div>
 
-    <!-- Bootstrap Script -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

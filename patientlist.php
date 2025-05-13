@@ -12,17 +12,14 @@ $role = $_SESSION['role'] ?? '';
 $csrf_token = bin2hex(random_bytes(32));
 $_SESSION['csrf_token'] = $csrf_token;
 
-// Pagination setup
 $recordsPerPage = 10;
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $recordsPerPage;
 
 try {
-    // Get total count of patients
     $countStmt = $connect->query("SELECT COUNT(*) FROM patients");
     $totalPatients = $countStmt->fetchColumn();
 
-    // Get current page of patients
     $stmt = $connect->prepare("SELECT * FROM patients ORDER BY full_name LIMIT :limit OFFSET :offset");
     $stmt->bindValue(':limit', $recordsPerPage, PDO::PARAM_INT);
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
@@ -34,7 +31,6 @@ try {
     die("Database error: " . $e->getMessage());
 }
 
-// Get current user data for profile editing
 try {
     $userStmt = $connect->prepare("SELECT * FROM users WHERE username = :username");
     $userStmt->bindParam(':username', $username);
@@ -144,7 +140,7 @@ try {
 
             <!-- Record Count Display -->
             <div class="record-count">
-                Total Patients: <?= $totalPatients ?>
+                Total Patients: <span id="patientCount"><?= $totalPatients ?></span>
             </div>
 
             <!-- Add Patient Button: Trigger Modal -->
@@ -180,25 +176,25 @@ try {
                                 <!-- Edit Button: Trigger Modal -->
                                 <button class="btn btn-sm btn-primary edit-btn" 
                                         data-id="<?= $row['patient_id'] ?>" 
-                                        data-name="<?= $row['full_name'] ?>" 
-                                        data-gender="<?= $row['gender'] ?>" 
-                                        data-age="<?= $row['age'] ?>" 
-                                        data-birth="<?= $row['birth_date'] ?>">Edit</button>
+                                        data-name="<?= htmlspecialchars($row['full_name']) ?>" 
+                                        data-gender="<?= htmlspecialchars($row['gender']) ?>" 
+                                        data-age="<?= htmlspecialchars($row['age']) ?>" 
+                                        data-birth="<?= htmlspecialchars($row['birth_date']) ?>">Edit</button>
 
                                 <!-- Delete Button -->
                                 <button class="btn btn-sm btn-danger delete-btn" 
                                         data-id="<?= $row['patient_id'] ?>" 
-                                        data-name="<?= $row['full_name'] ?>">Delete</button>
+                                        data-name="<?= htmlspecialchars($row['full_name']) ?>">Delete</button>
 
                                 <!-- Request Button -->
                                 <button class="btn btn-sm btn-info request-btn" 
                                         data-bs-toggle="modal" 
                                         data-bs-target="#requestModal"
                                         data-patient-id="<?= $row['patient_id'] ?>"
-                                        data-name="<?= $row['full_name'] ?>"
-                                        data-gender="<?= $row['gender'] ?>"
-                                        data-age="<?= $row['age'] ?>"
-                                        data-birth="<?= $row['birth_date'] ?>">Request</button>
+                                        data-name="<?= htmlspecialchars($row['full_name']) ?>"
+                                        data-gender="<?= htmlspecialchars($row['gender']) ?>"
+                                        data-age="<?= htmlspecialchars($row['age']) ?>"
+                                        data-birth="<?= htmlspecialchars($row['birth_date']) ?>">Request</button>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -242,30 +238,31 @@ try {
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form method="POST" action="edit_patient.php">
-                        <input type="hidden" name="patient_id" id="patient_id">
+                    <form id="editPatientForm">
+                        <input type="hidden" name="patient_id" id="edit_patient_id">
+                        <input type="hidden" name="csrf_token" value="<?= $csrf_token ?>">
 
                         <div class="mb-3">
-                            <label for="name" class="form-label">Full Name</label>
-                            <input type="text" class="form-control" id="name" name="full_name" required>
+                            <label for="edit_name" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="edit_name" name="full_name" required>
                         </div>
 
                         <div class="mb-3">
-                            <label for="gender" class="form-label">Gender</label>
-                            <select class="form-select" id="gender" name="gender" required>
+                            <label for="edit_gender" class="form-label">Gender</label>
+                            <select class="form-select" id="edit_gender" name="gender" required>
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
                             </select>
                         </div>
 
                         <div class="mb-3">
-                            <label for="age" class="form-label">Age</label>
-                            <input type="number" class="form-control" id="age" name="age" required>
+                            <label for="edit_age" class="form-label">Age</label>
+                            <input type="number" class="form-control" id="edit_age" name="age" required>
                         </div>
 
                         <div class="mb-3">
-                            <label for="birth_date" class="form-label">Date of Birth</label>
-                            <input type="date" class="form-control" id="birth_date" name="birth_date" required>
+                            <label for="edit_birth_date" class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" id="edit_birth_date" name="birth_date" required>
                         </div>
 
                         <button type="submit" class="btn btn-success w-100">Update Patient</button>
@@ -289,7 +286,7 @@ try {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-danger" onclick="deletePatient($('#delete_patient_id').val())">Delete</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
                 </div>
             </div>
         </div>
@@ -304,15 +301,17 @@ try {
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form method="POST" action="add_patient.php">
+                    <form id="addPatientForm">
+                        <input type="hidden" name="csrf_token" value="<?= $csrf_token ?>">
+                        
                         <div class="mb-3">
-                            <label for="name" class="form-label">Full Name</label>
-                            <input type="text" class="form-control" id="name" name="full_name" placeholder="Enter full name" required>
+                            <label for="add_name" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="add_name" name="full_name" placeholder="Enter full name" required>
                         </div>
 
                         <div class="mb-3">
-                            <label for="gender" class="form-label">Gender</label>
-                            <select class="form-select" id="gender" name="gender" required>
+                            <label for="add_gender" class="form-label">Gender</label>
+                            <select class="form-select" id="add_gender" name="gender" required>
                                 <option value="" disabled selected>Select gender</option>
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
@@ -320,16 +319,77 @@ try {
                         </div>
 
                         <div class="mb-3">
-                            <label for="age" class="form-label">Age</label>
-                            <input type="number" class="form-control" id="age" name="age" min="0" required>
+                            <label for="add_age" class="form-label">Age</label>
+                            <input type="number" class="form-control" id="add_age" name="age" min="0" required>
                         </div>
 
                         <div class="mb-3">
-                            <label for="birth_date" class="form-label">Date of Birth</label>
-                            <input type="date" class="form-control" id="birth_date" name="birth_date" required>
+                            <label for="add_birth_date" class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" id="add_birth_date" name="birth_date" required>
                         </div>
 
                         <button type="submit" class="btn btn-success w-100">Add Patient</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Request Modal -->
+    <div class="modal fade" id="requestModal" tabindex="-1" aria-labelledby="requestModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="requestModalLabel">Request Test</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="requestForm">
+                        <input type="hidden" name="csrf_token" value="<?= $csrf_token ?>">
+                        <input type="hidden" id="patientId" name="patient_id">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Patient ID</label>
+                            <input type="text" class="form-control" id="displayPatientId" readonly>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Patient Name</label>
+                            <input type="text" class="form-control" id="patientName" name="name" readonly>
+                        </div>
+                        
+                        <!-- Added Sample ID Field -->
+                        <div class="mb-3">
+                            <label for="sampleId" class="form-label">Sample ID*</label>
+                            <input type="text" class="form-control" id="sampleId" name="sample_id" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="testName" class="form-label">Test Name*</label>
+                            <select class="form-select" id="testName" name="test_name" required>
+                                <option value="">Select Test</option>
+                                <option value="CBC">Complete Blood Count (CBC)</option>
+                                <option value="Urinalysis">Urinalysis</option>
+                                <option value="Blood Chemistry">Blood Chemistry</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="station" class="form-label">Station/Ward*</label>
+                            <input type="text" class="form-control" id="station" name="station" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="physician" class="form-label">Requesting Physician</label>
+                            <input type="text" class="form-control" id="physician" name="physician">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="clinical_info" class="form-label">Clinical Information</label>
+                            <textarea class="form-control" id="clinical_info" name="clinical_info" rows="3"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Submit Request</button>
                     </form>
                 </div>
             </div>
@@ -347,6 +407,7 @@ try {
                 <div class="modal-body">
                     <form method="POST" action="edit_profile.php">
                         <input type="hidden" name="user_id" value="<?= $user_id ?>">
+                        <input type="hidden" name="csrf_token" value="<?= $csrf_token ?>">
                         
                         <div class="mb-3">
                             <label for="username" class="form-label">Username</label>
@@ -376,67 +437,6 @@ try {
         </div>
     </div>
 
-    <!-- Modal for Request -->
-<div class="modal fade" id="requestModal" tabindex="-1" aria-labelledby="requestModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="requestModalLabel">Request Test</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="requestForm">
-                    <input type="hidden" name="csrf_token" value="<?= $csrf_token ?>">
-                    <input type="hidden" id="patientId" name="patient_id">
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Patient ID</label>
-                        <input type="text" class="form-control" id="displayPatientId" readonly>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Patient Name</label>
-                        <input type="text" class="form-control" id="patientName" name="name" readonly>
-                    </div>
-                    
-                    <!-- Added Sample ID Field -->
-                    <div class="mb-3">
-                        <label for="sampleId" class="form-label">Sample ID*</label>
-                        <input type="text" class="form-control" id="sampleId" name="sample_id" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="testName" class="form-label">Test Name*</label>
-                        <select class="form-select" id="testName" name="test_name" required>
-                            <option value="">Select Test</option>
-                            <option value="CBC">Complete Blood Count (CBC)</option>
-                            <option value="Urinalysis">Urinalysis</option>
-                            <option value="Blood Chemistry">Blood Chemistry</option>
-                        </select>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="station" class="form-label">Station/Ward*</label>
-                        <input type="text" class="form-control" id="station" name="station" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="physician" class="form-label">Requesting Physician</label>
-                        <input type="text" class="form-control" id="physician" name="physician">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="clinical_info" class="form-label">Clinical Information</label>
-                        <textarea class="form-control" id="clinical_info" name="clinical_info" rows="3"></textarea>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary">Submit Request</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
     <!-- Add User Modal (Admin Only) -->
     <?php if ($role === 'admin'): ?>
     <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
@@ -448,6 +448,8 @@ try {
                 </div>
                 <div class="modal-body">
                     <form method="POST" action="add_user.php">
+                        <input type="hidden" name="csrf_token" value="<?= $csrf_token ?>">
+                        
                         <div class="mb-3">
                             <label for="new_username" class="form-label">Username</label>
                             <input type="text" class="form-control" id="new_username" name="username" required>
@@ -474,174 +476,416 @@ try {
     </div>
     <?php endif; ?>
 
-    <!-- Scripts -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Request Modal Handler
-        $('#requestModal').on('show.bs.modal', function(event) {
-            const button = $(event.relatedTarget);
-            const modal = $(this);
+        document.addEventListener('DOMContentLoaded', function() {
             
-            modal.find('#patientId').val(button.data('patient-id'));
-    modal.find('#displayPatientId').val(button.data('patient-id'));
-    modal.find('#patientName').val(button.data('name'));
-    
-    // Generate a sample ID if not provided
-    const sampleId = 'LAB-' + Date.now().toString().slice(-6);
-    modal.find('#sampleId').val(sampleId);
-        });
-
-        // Request Form Submission
-        $('#requestForm').on('submit', function(e) {
-            e.preventDefault();
-            const form = $(this);
-            const submitBtn = form.find('button[type="submit"]');
-            
-            submitBtn.prop('disabled', true)
-                     .html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...');
-
-            $.ajax({
-                url: 'process_request.php',
-                type: 'POST',
-                data: form.serialize(),
-                dataType: 'json'
-            })
-            .done(function(response) {
-                if (response.success) {
-                    Swal.fire({
-                        title: 'Success!',
-                        text: response.message,
-                        icon: 'success'
-                    }).then(() => {
-                        $('#requestModal').modal('hide');
-                        form.trigger('reset');
+            const addPatientForm = document.getElementById('addPatientForm');
+            addPatientForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                
+                const submitBtn = addPatientForm.querySelector('button[type="submit"]');
+                const originalBtnText = submitBtn.innerHTML;
+                
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Adding...';
+                
+                try {
+                    const formData = new FormData(addPatientForm);
+                    
+                    const response = await fetch('add_patient.php', {
+                        method: 'POST',
+                        body: formData
                     });
-                } else {
-                    Swal.fire('Error!', response.message, 'error');
-                }
-            })
-            .fail(function() {
-                Swal.fire('Error!', 'Failed to submit request. Please try again.', 'error');
-            })
-            .always(function() {
-                submitBtn.prop('disabled', false).text('Submit Request');
-            });
-        });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: result.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        
+                        const newPatientRow = document.createElement('tr');
+                        newPatientRow.id = `patient-row-${result.patient.patient_id}`;
+                        
+                        newPatientRow.innerHTML = `
+                            <td>${result.patient.patient_id}</td>
+                            <td>${result.patient.full_name}</td>
+                            <td>${result.patient.gender}</td>
+                            <td>${result.patient.age}</td>
+                            <td>${result.patient.birth_date}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary edit-btn" 
+                                        data-id="${result.patient.patient_id}" 
+                                        data-name="${result.patient.full_name}" 
+                                        data-gender="${result.patient.gender}" 
+                                        data-age="${result.patient.age}" 
+                                        data-birth="${result.patient.birth_date}">Edit</button>
 
-        // Edit Modal Handler
-        $('#editModal').on('show.bs.modal', function(event) {
-            const button = $(event.relatedTarget);
-            const modal = $(this);
-            modal.find('#patient_id').val(button.data('id'));
-            modal.find('#name').val(button.data('name'));
-            modal.find('#gender').val(button.data('gender'));
-            modal.find('#age').val(button.data('age'));
-            modal.find('#birth_date').val(button.data('birth'));
-        });
+                                <button class="btn btn-sm btn-danger delete-btn" 
+                                        data-id="${result.patient.patient_id}" 
+                                        data-name="${result.patient.full_name}">Delete</button>
 
-        // Delete Modal Handler
-        $('#deleteModal').on('show.bs.modal', function(event) {
-            const button = $(event.relatedTarget);
-            const modal = $(this);
-            modal.find('#delete_patient_id').val(button.data('id'));
-            modal.find('#delete_patient_name').text(button.data('name'));
-        });
-
-        // Delete Patient function
-        function deletePatient(patientId) {
-            const patientName = $('#delete_patient_name').text();
-            
-            Swal.fire({
-                title: 'Are you sure?',
-                text: `You are about to delete patient: ${patientName}`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Yes, delete it!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.post('delete_patient.php', { 
-                        patient_id: patientId,
-                        csrf_token: '<?= $csrf_token ?>'
-                    }, function(response) {
-                        if (response.success) {
-                            Swal.fire(
-                                'Deleted!',
-                                response.message,
-                                'success'
-                            ).then(() => {
-                                $('#patient-row-' + patientId).remove();
-                                $('#deleteModal').modal('hide');
-                                location.reload();
-                            });
+                                <button class="btn btn-sm btn-info request-btn" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#requestModal"
+                                        data-patient-id="${result.patient.patient_id}"
+                                        data-name="${result.patient.full_name}"
+                                        data-gender="${result.patient.gender}"
+                                        data-age="${result.patient.age}"
+                                        data-birth="${result.patient.birth_date}">Request</button>
+                            </td>
+                        `;
+                        
+                        const tableBody = document.getElementById('tableBody');
+                        if (tableBody.firstChild) {
+                            tableBody.insertBefore(newPatientRow, tableBody.firstChild);
                         } else {
-                            Swal.fire(
-                                'Error!',
-                                response.message,
-                                'error'
-                            );
+                            tableBody.appendChild(newPatientRow);
                         }
-                    }, 'json').fail(function() {
-                        Swal.fire(
-                            'Error!',
-                            'Error deleting patient. Please try again.',
-                            'error'
-                        );
+                        
+                        const countElement = document.getElementById('patientCount');
+                        const currentCount = parseInt(countElement.textContent);
+                        countElement.textContent = currentCount + 1;
+                        
+                        addPatientForm.reset();
+                        const addModal = bootstrap.Modal.getInstance(document.getElementById('addModal'));
+                        addModal.hide();
+                        
+                        attachEventHandlers();
+                    } else {
+                        let errorMessage = result.message;
+                        
+                        if (result.errors && result.errors.length > 0) {
+                            errorMessage += ':<br>' + result.errors.join('<br>');
+                        }
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            html: errorMessage
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: 'An error occurred while adding the patient. Please try again.'
+                    });
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                }
+            });
+            
+            const editPatientForm = document.getElementById('editPatientForm');
+            editPatientForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                
+                const submitBtn = editPatientForm.querySelector('button[type="submit"]');
+                const originalBtnText = submitBtn.innerHTML;
+                
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Updating...';
+                
+                try {
+                    const formData = new FormData(editPatientForm);
+                    const patientId = formData.get('patient_id');
+                    
+                    const response = await fetch('edit_patient.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: result.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        
+                        const row = document.getElementById(`patient-row-${patientId}`);
+                        if (row) {
+                            row.cells[1].textContent = formData.get('full_name');
+                            row.cells[2].textContent = formData.get('gender');
+                            row.cells[3].textContent = formData.get('age');
+                            row.cells[4].textContent = formData.get('birth_date');
+                            
+                            const editBtn = row.querySelector('.edit-btn');
+                            editBtn.dataset.name = formData.get('full_name');
+                            editBtn.dataset.gender = formData.get('gender');
+                            editBtn.dataset.age = formData.get('age');
+                            editBtn.dataset.birth = formData.get('birth_date');
+                            
+                            const deleteBtn = row.querySelector('.delete-btn');
+                            deleteBtn.dataset.name = formData.get('full_name');
+                            
+                            const requestBtn = row.querySelector('.request-btn');
+                            requestBtn.dataset.name = formData.get('full_name');
+                            requestBtn.dataset.gender = formData.get('gender');
+                            requestBtn.dataset.age = formData.get('age');
+                            requestBtn.dataset.birth = formData.get('birth_date');
+                        }
+                        
+                        const editModal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+                        editModal.hide();
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: result.message || 'Failed to update patient.'
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: 'An error occurred while updating the patient. Please try again.'
+                    });
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                }
+            });
+            
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+            confirmDeleteBtn.addEventListener('click', async function() {
+                const patientId = document.getElementById('delete_patient_id').value;
+                const patientName = document.getElementById('delete_patient_name').textContent;
+                
+                Swal.fire({
+                    title: 'Deleting...',
+                    html: 'Please wait while we process your request.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('patient_id', patientId);
+                    formData.append('csrf_token', '<?= $csrf_token ?>');
+                    
+                    const response = await fetch('delete_patient.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        const row = document.getElementById(`patient-row-${patientId}`);
+                        if (row) {
+                            row.style.transition = 'opacity 0.5s';
+                            row.style.opacity = '0';
+                            
+                            setTimeout(() => {
+                                row.remove();
+                                
+                                const countElement = document.getElementById('patientCount');
+                                const currentCount = parseInt(countElement.textContent);
+                                countElement.textContent = currentCount - 1;
+                                
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Deleted!',
+                                    text: result.message || `Patient ${patientName} has been deleted.`,
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            }, 500);
+                        }
+                        
+                        const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+                        deleteModal.hide();
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: result.message || 'Failed to delete patient.'
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: 'An error occurred while deleting the patient. Please try again.'
                     });
                 }
             });
-        }
-
-        // Logout confirmation
-        $('#logoutBtn').on('click', function(e) {
-            e.preventDefault();
-            const href = $(this).attr('href');
             
-            Swal.fire({
-                title: 'Logout?',
-                text: 'Are you sure you want to log out?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, log out'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = href;
+            const requestForm = document.getElementById('requestForm');
+            requestForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                
+                const submitBtn = requestForm.querySelector('button[type="submit"]');
+                const originalBtnText = submitBtn.innerHTML;
+                
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+                
+                try {
+                    const formData = new FormData(requestForm);
+                    
+                    const response = await fetch('process_request.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: result.message,
+                            icon: 'success'
+                        }).then(() => {
+                            requestForm.reset();
+                            const requestModal = bootstrap.Modal.getInstance(document.getElementById('requestModal'));
+                            requestModal.hide();
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: result.message,
+                            icon: 'error'
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Failed to submit request. Please try again.',
+                        icon: 'error'
+                    });
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
                 }
             });
-        });
-
-        // Search functionality
-        $('#searchInput').on('keyup', function() {
-            const value = $(this).val().toLowerCase();
-            $('#tableBody tr').filter(function() {
-                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('keyup', function() {
+                const value = this.value.toLowerCase();
+                const rows = document.querySelectorAll('#tableBody tr');
+                
+                rows.forEach(row => {
+                    const rowText = row.textContent.toLowerCase();
+                    row.style.display = rowText.includes(value) ? '' : 'none';
+                });
             });
-        });
-
-        // Show success/error messages on page load
-        $(document).ready(function() {
-            <?php if (isset($_GET['status'])): ?>
-                <?php if ($_GET['status'] == 'success'): ?>
+            
+            const logoutBtn = document.getElementById('logoutBtn');
+            logoutBtn.addEventListener('click', function(event) {
+                event.preventDefault();
+                const href = this.getAttribute('href');
+                
+                Swal.fire({
+                    title: 'Logout?',
+                    text: 'Are you sure you want to log out?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, log out'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = href;
+                    }
+                });
+            });
+            
+            function attachEventHandlers() {
+                document.querySelectorAll('.edit-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const patientId = this.dataset.id;
+                        const name = this.dataset.name;
+                        const gender = this.dataset.gender;
+                        const age = this.dataset.age;
+                        const birthDate = this.dataset.birth;
+                        
+                        document.getElementById('edit_patient_id').value = patientId;
+                        document.getElementById('edit_name').value = name;
+                        document.getElementById('edit_gender').value = gender;
+                        document.getElementById('edit_age').value = age;
+                        document.getElementById('edit_birth_date').value = birthDate;
+                        
+                        const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+                        editModal.show();
+                    });
+                });
+                
+                document.querySelectorAll('.delete-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const patientId = this.dataset.id;
+                        const name = this.dataset.name;
+                        
+                        document.getElementById('delete_patient_id').value = patientId;
+                        document.getElementById('delete_patient_name').textContent = name;
+                        
+                        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+                        deleteModal.show();
+                    });
+                });
+                
+                document.querySelectorAll('.request-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const patientId = this.dataset.patientId;
+                        const name = this.dataset.name;
+                        const gender = this.dataset.gender;
+                        const age = this.dataset.age;
+                        const birthDate = this.dataset.birth;
+                        
+                        document.getElementById('patientId').value = patientId;
+                        document.getElementById('displayPatientId').value = patientId;
+                        document.getElementById('patientName').value = name;
+                        
+                        const sampleId = 'LAB-' + Date.now().toString().slice(-6);
+                        document.getElementById('sampleId').value = sampleId;
+                    });
+                });
+            }
+            
+            attachEventHandlers();
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('status')) {
+                const status = urlParams.get('status');
+                const message = urlParams.get('message') || '';
+                
+                if (status === 'success') {
                     Swal.fire({
                         title: 'Success!',
-                        text: '<?= $_GET['message'] ?? 'Operation completed successfully' ?>',
+                        text: message || 'Operation completed successfully',
                         icon: 'success',
                         confirmButtonText: 'OK'
                     });
-                <?php elseif ($_GET['status'] == 'error'): ?>
+                } else if (status === 'error') {
                     Swal.fire({
                         title: 'Error!',
-                        text: '<?= $_GET['message'] ?? 'Something went wrong. Please try again.' ?>',
+                        text: message || 'Something went wrong. Please try again.',
                         icon: 'error',
                         confirmButtonText: 'OK'
                     });
-                <?php endif; ?>
-            <?php endif; ?>
+                }
+            }
         });
     </script>
 </body>
