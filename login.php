@@ -30,11 +30,11 @@
 					$errMsg = "User $username not found.";
 				}
 				else {
-					$password = hash('sha256', $_POST['password']);
+					//$password = hash('sha256', $_POST['password']);
 					// echo $password;
 					// echo("<br>");
 					// echo $data['password'];
-  
+					$password = $_POST['password'];
 					if($password == $data['password']) {
 						
 					
