@@ -2,19 +2,16 @@
 session_start();
 require_once 'config/db_connect.php';
 
-// Check if user is logged in
 if (!isset($_SESSION['username'])) {
     header("Location: login.php");
     exit();
 }
 
-// Generate CSRF token
 if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 $csrf_token = $_SESSION['csrf_token'];
 
-// Check if ID is provided
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     header("Location: records.php");
     exit();
@@ -25,7 +22,6 @@ $errorMsg = null;
 $successMsg = null;
 
 try {
-    // Get the test record
     $stmt = $connect->prepare("
         SELECT tr.*, p.full_name, p.gender, p.age, p.birth_date 
         FROM test_records tr
@@ -38,38 +34,30 @@ try {
     $record = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$record) {
-        // Record not found
         header("Location: records.php");
         exit();
     }
     
-    // Check if the record is already completed
     if ($record['status'] === 'Completed') {
         header("Location: view_record.php?id={$recordId}");
         exit();
     }
     
-    // Process form submission
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        // Verify CSRF token
         if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
             die("CSRF token validation failed");
         }
         
-        // Validate and sanitize inputs
         $testDate = !empty($_POST['test_date']) ? $_POST['test_date'] : null;
         $status = !empty($_POST['status']) ? $_POST['status'] : 'Pending';
         $result = isset($_POST['result']) ? $_POST['result'] : null;
         $remarks = isset($_POST['remarks']) ? $_POST['remarks'] : null;
         
-        // Validate status
         if (!in_array($status, ['Pending', 'In Progress', 'Completed'])) {
             $errorMsg = "Invalid status value.";
         }
         
-        // If no errors, update the record
         if (!$errorMsg) {
-            // Build update query with available fields
             $updateFields = [];
             $params = [':id' => $recordId];
             
@@ -83,12 +71,12 @@ try {
                 $params[':status'] = $status;
             }
             
-            if (isset($result)) { // Allow empty result (clearing)
+            if (isset($result)) { 
                 $updateFields[] = "result = :result";
                 $params[':result'] = $result;
             }
             
-            if (isset($remarks)) { // Allow empty remarks (clearing)
+            if (isset($remarks)) {
                 $updateFields[] = "remarks = :remarks";
                 $params[':remarks'] = $remarks;
             }
@@ -108,7 +96,6 @@ try {
                 if ($updateStmt->rowCount() > 0) {
                     $successMsg = "Test record updated successfully.";
                     
-                    // Refresh record data after update
                     $stmt->execute([':id' => $recordId]);
                     $record = $stmt->fetch(PDO::FETCH_ASSOC);
                 } else {
@@ -134,7 +121,6 @@ try {
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-    <!-- Header -->
     <header>
         <a href="logout.php" onclick="return confirm('Log out?')">Logout</a>
     </header>
@@ -161,7 +147,6 @@ try {
             <form method="POST" action="">
                 <input type="hidden" name="csrf_token" value="<?= $csrf_token ?>">
                 
-                <!-- Patient Information (Read-only) -->
                 <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">Patient Information</h5>
@@ -194,7 +179,6 @@ try {
                     </div>
                 </div>
                 
-                <!-- Test Information -->
                 <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">Test Information</h5>
@@ -235,7 +219,6 @@ try {
                     </div>
                 </div>
                 
-                <!-- Test Results -->
                 <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">Test Results</h5>
@@ -252,7 +235,6 @@ try {
                     </div>
                 </div>
                 
-                <!-- Submit Buttons -->
                 <div class="d-flex justify-content-end gap-2">
                     <a href="view_record.php?id=<?= $recordId ?>" class="btn btn-secondary">Cancel</a>
                     <button type="submit" id="saveBtn" class="btn btn-primary">Save Changes</button>
@@ -262,7 +244,6 @@ try {
                 </div>
             </form>
             
-            <!-- Confirm Completion Modal -->
             <div class="modal fade" id="confirmCompleteModal" tabindex="-1" aria-labelledby="confirmCompleteModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
@@ -284,7 +265,6 @@ try {
         </div>
     </div>
 
-    <!-- JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function goBack() {
@@ -296,13 +276,11 @@ try {
             const statusSelect = document.querySelector('select[name="status"]');
             const confirmCompleteBtn = document.getElementById('confirmCompleteBtn');
             
-            // Handle the confirmation modal button click
             confirmCompleteBtn.addEventListener('click', function() {
                 statusSelect.value = 'Completed';
                 form.submit();
             });
             
-            // Success message auto-hide after 5 seconds
             const successAlert = document.querySelector('.alert-success');
             if (successAlert) {
                 setTimeout(function() {
@@ -314,9 +292,7 @@ try {
                 }, 5000);
             }
             
-            // Form submission confirmation
             form.addEventListener('submit', function(event) {
-                // If the status is changing to "Completed" without using the modal
                 if (statusSelect.value === 'Completed' && '<?= $record['status'] ?>' !== 'Completed') {
                     event.preventDefault();
                     const modal = new bootstrap.Modal(document.getElementById('confirmCompleteModal'));

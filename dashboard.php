@@ -9,17 +9,14 @@ if (!isset($_SESSION['username'])) {
 $username = $_SESSION['username'];
 $role = $_SESSION['role'] ?? '';
 
-// Pagination setup
 $recordsPerPage = 10;
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? intval($_GET['page']) : 1;
 $offset = ($page - 1) * $recordsPerPage;
 
 try {
-    // Get total count of patients
     $countStmt = $connect->query("SELECT COUNT(*) FROM patients");
     $totalPatients = $countStmt->fetchColumn();
 
-    // Get current page of patients
     $stmt = $connect->prepare("SELECT * FROM patients LIMIT :limit OFFSET :offset");
     $stmt->bindValue(':limit', $recordsPerPage, PDO::PARAM_INT);
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
@@ -30,8 +27,7 @@ try {
 } catch (PDOException $e) {
     die("Database error: " . $e->getMessage());
 }
-// Placeholder data for doctors and treatments
-$doctorsAtWork = 5;  // Sample number, replace with actual data
+$doctorsAtWork = 5; 
 $topTreatments = [
     ['name' => 'Treatment A', 'count' => 25],
     ['name' => 'Treatment B', 'count' => 20],

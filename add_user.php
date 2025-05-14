@@ -2,7 +2,6 @@
 session_start();
 require_once 'config/db_connect.php';
 
-// Check if user is admin
 if ($_SESSION['role'] !== 'admin') {
     header("Location: dashboard.php");
     exit();

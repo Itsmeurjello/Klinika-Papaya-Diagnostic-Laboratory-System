@@ -2,12 +2,10 @@
 include 'db.php';
 header('Content-Type: application/json');
 
-// Enable error reporting (remove in production)
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
 try {
-    // Required fields
     $required = ['patientId', 'sampleId', 'patientName', 'stationWard', 'gender', 'age', 'birthDate', 'requestDate'];
     foreach ($required as $field) {
         if (empty($_POST[$field])) {
@@ -15,7 +13,6 @@ try {
         }
     }
 
-    // Assign inputs securely
     $patientId = $_POST['patientId'];
     $sampleId = $_POST['sampleId'];
     $patientName = $_POST['patientName'];
@@ -25,7 +22,6 @@ try {
     $birthDate = $_POST['birthDate'];
     $requestDate = $_POST['requestDate'];
 
-    // Prepare the SQL statement
     $stmt = $conn->prepare("INSERT INTO request_list 
         (patient_id, sample_id, patient_name, station_ward, gender, age, birth_date, request_date) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
@@ -46,7 +42,6 @@ try {
     );
 
     if (!$stmt->execute()) {
-        // Check for foreign key constraint failure
         if ($stmt->errno == 1452) {
             throw new Exception("Invalid patient ID. Make sure the patient exists in the patients table.");
         }

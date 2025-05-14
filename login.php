@@ -1,14 +1,9 @@
 <?php
-
-
-
-
 	require 'config/db_connect.php';
 
 	if(isset($_POST['login'])) {
 		$errMsg = '';
 
-		// Get data from FORM
 		$username = $_POST['username'];
 		$password = $_POST['password'];
  
@@ -30,6 +25,7 @@
 					$errMsg = "User $username not found.";
 				}
 				else {
+					// uncomment this later, comment ko muna for testing purpose.
 					//$password = hash('sha256', $_POST['password']);
 					// echo $password;
 					// echo("<br>");

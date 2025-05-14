@@ -2,22 +2,18 @@
 session_start();
 require_once 'config/db_connect.php';
 
-// Check if user is logged in
 if (!isset($_SESSION['username'])) {
     header("Location: login.php");
     exit();
 }
 
-// Get search term if provided
 $searchTerm = isset($_GET['search']) ? trim($_GET['search']) : '';
 
-// Pagination setup
 $recordsPerPage = 10;
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $recordsPerPage;
 
 try {
-    // Build the query based on search term
     $whereClause = '';
     $params = [];
     
@@ -26,7 +22,6 @@ try {
         $params[':search'] = "%$searchTerm%";
     }
     
-    // Get total count of test summaries
     $countSql = "SELECT COUNT(*) FROM test_records $whereClause";
     $countStmt = $connect->prepare($countSql);
     
@@ -39,11 +34,9 @@ try {
     $totalTests = $countStmt->fetchColumn();
     $totalPages = ceil($totalTests / $recordsPerPage);
     
-    // Get current page of test summaries
     $sql = "SELECT * FROM test_records $whereClause ORDER BY test_date DESC LIMIT :limit OFFSET :offset";
     $stmt = $connect->prepare($sql);
     
-    // Bind parameters
     if (!empty($params)) {
         foreach ($params as $key => $value) {
             $stmt->bindValue($key, $value);
@@ -84,7 +77,6 @@ try {
         <div class="table-container">
             <h2>Test Summary</h2>
 
-            <!-- Search Bar and Add Button -->
             <div class="table-controls">
                 <form method="GET" class="d-flex mb-3" style="width:70%">
                     <input type="text" class="form-control" name="search" placeholder="Search by Test Name, Result or Remarks" value="<?php echo htmlspecialchars($searchTerm); ?>">
@@ -98,21 +90,18 @@ try {
                 </button>
             </div>
 
-            <!-- Record Count -->
             <div class="record-count">
                 <?php if (isset($totalTests)): ?>
                     Total Records: <?php echo $totalTests; ?>
                 <?php endif; ?>
             </div>
 
-            <!-- Error Message Display -->
             <?php if(isset($errMsg)): ?>
                 <div class="alert alert-danger">
                     <?php echo htmlspecialchars($errMsg); ?>
                 </div>
             <?php endif; ?>
 
-            <!-- Test Summary Table -->
             <table class="table table-bordered table-hover test-summary-table">
                 <thead class="table-dark">
                     <tr>
@@ -195,7 +184,6 @@ try {
                 </tbody>
             </table>
 
-            <!-- Pagination -->
             <?php if (isset($totalPages) && $totalPages > 1): ?>
                 <nav>
                     <ul class="pagination">
@@ -222,7 +210,6 @@ try {
         </div>
     </div>
 
-    <!-- View Test Modal -->
     <div class="modal fade" id="viewTestModal" tabindex="-1" aria-labelledby="viewTestModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -281,7 +268,6 @@ try {
         </div>
     </div>
 
-    <!-- Edit Test Modal -->
     <div class="modal fade" id="editTestModal" tabindex="-1" aria-labelledby="editTestModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -349,7 +335,6 @@ try {
         </div>
     </div>
 
-    <!-- Add Test Modal -->
     <div class="modal fade" id="addTestModal" tabindex="-1" aria-labelledby="addTestModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -447,7 +432,6 @@ try {
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
     <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -469,14 +453,12 @@ try {
         </div>
     </div>
 
-    <!-- Bootstrap 5 JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // View Test Details
             const viewTestModal = document.getElementById('viewTestModal');
             if (viewTestModal) {
                 viewTestModal.addEventListener('show.bs.modal', function(event) {
@@ -505,7 +487,6 @@ try {
                 });
             }
             
-            // Edit Test Record
             const editTestModal = document.getElementById('editTestModal');
             if (editTestModal) {
                 editTestModal.addEventListener('show.bs.modal', function(event) {
@@ -516,7 +497,6 @@ try {
                     document.getElementById('editTestName').value = button.getAttribute('data-test');
                     document.getElementById('editSampleId').value = button.getAttribute('data-sample');
                     
-                    // Format the date-time for the datetime-local input
                     const testDate = new Date(button.getAttribute('data-date'));
                     const year = testDate.getFullYear();
                     const month = String(testDate.getMonth() + 1).padStart(2, '0');
@@ -531,7 +511,6 @@ try {
                 });
             }
             
-            // Handle Edit Form Submission
             const editTestForm = document.getElementById('editTestForm');
             if (editTestForm) {
                 editTestForm.addEventListener('submit', function(event) {
@@ -574,7 +553,6 @@ try {
                 });
             }
             
-            // Handle Add Form Submission
             const addTestForm = document.getElementById('addTestForm');
             if (addTestForm) {
                 addTestForm.addEventListener('submit', function(event) {
@@ -617,7 +595,6 @@ try {
                 });
             }
             
-            // Delete Test Record
             const deleteButtons = document.querySelectorAll('.delete-btn');
             if (deleteButtons.length > 0) {
                 deleteButtons.forEach(button => {
@@ -636,7 +613,6 @@ try {
                 });
             }
             
-            // Confirm Delete
             const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
             if (confirmDeleteBtn) {
                 confirmDeleteBtn.addEventListener('click', function() {
@@ -683,14 +659,12 @@ try {
                 });
             }
             
-            // Auto generate sample ID in add form
             const addSampleIdField = document.getElementById('addSampleId');
             if (addSampleIdField && addSampleIdField.value === '') {
                 const randomNum = Math.floor(100000 + Math.random() * 900000); // 6-digit number
                 addSampleIdField.value = `LAB-${randomNum}`;
             }
             
-            // Set current date-time in add form
             const addTestDateField = document.getElementById('addTestDate');
             if (addTestDateField && addTestDateField.value === '') {
                 const now = new Date();

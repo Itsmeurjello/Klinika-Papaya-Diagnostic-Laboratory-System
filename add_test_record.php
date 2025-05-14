@@ -4,12 +4,10 @@ require_once 'config/db_connect.php';
 
 header('Content-Type: application/json');
 
-// Check if user is logged in
 if (!isset($_SESSION['username'])) {
     die(json_encode(['success' => false, 'message' => 'Unauthorized']));
 }
 
-// Validate required fields
 $requiredFields = ['patient_id', 'test_name', 'sample_id', 'section', 'test_date', 'status'];
 $missingFields = [];
 
@@ -27,7 +25,6 @@ if (!empty($missingFields)) {
 }
 
 try {
-    // Get patient information
     $patientStmt = $connect->prepare("SELECT full_name FROM patients WHERE patient_id = :patient_id");
     $patientStmt->execute([':patient_id' => $_POST['patient_id']]);
     $patient = $patientStmt->fetch(PDO::FETCH_ASSOC);
@@ -36,7 +33,6 @@ try {
         die(json_encode(['success' => false, 'message' => 'Patient not found']));
     }
     
-    // Check if sample ID already exists
     $checkStmt = $connect->prepare("SELECT COUNT(*) FROM test_records WHERE sample_id = :sample_id");
     $checkStmt->execute([':sample_id' => $_POST['sample_id']]);
     
@@ -44,7 +40,6 @@ try {
         die(json_encode(['success' => false, 'message' => 'Sample ID already exists']));
     }
     
-    // Insert new test record
     $sql = "INSERT INTO test_records (
                 patient_id, 
                 patient_name, 

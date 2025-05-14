@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <title>Login</title>
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -38,20 +37,17 @@
 <body>
     <div class="container">
         <div class="login-container rounded">
-            <!-- Logo Section -->
             <div class="logo-container">
                 <img src="assets/image/profile.jpg" alt="DIAGNOSTIC LABORATORY AND CLINIC" class="img-fluid" style="max-height: 100px;">
                 <div class="logo-text">DIAGNOSTIC LABORATORY AND CLINIC</div>
             </div>
             
-            <!-- Error Message Display -->
             <?php if(isset($errMsg)): ?>
                 <div class="alert alert-danger text-center">
                     <?php echo htmlspecialchars($errMsg); ?>
                 </div>
             <?php endif; ?>
             
-            <!-- Login Form -->
             <div class="login-body">
                 <form action="login.php" method="POST">
                     <div class="mb-3">
@@ -76,7 +72,6 @@
         </div>
     </div>
 
-    <!-- Success Modal -->
     <?php if(isset($_SESSION['login_success'])): ?>
     <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -95,11 +90,8 @@
         </div>
     </div>
     <?php unset($_SESSION['login_success']); endif; ?>
-
-    <!-- Bootstrap 5 JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Show the success modal if it's set
         <?php if(isset($_SESSION['login_success'])): ?>
             var myModal = new bootstrap.Modal(document.getElementById('successModal'));
             myModal.show();
