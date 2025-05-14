@@ -93,58 +93,13 @@ try {
     <title>Records</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background-color: #f1f1f1;
-        }
-        .main-content {
-            margin-left: 250px;
-            padding: 30px 40px;
-        }
-        header {
-            background-color: #f8f9fa;
-            padding: 10px 30px;
-            text-align: right;
-            position: fixed;
-            width: calc(100% - 250px);
-            top: 0;
-            z-index: 1000;
-            left: 250px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        header a {
-            color: #dc3545;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .table-container {
-            margin-top: 80px;
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            width: 95%;
-            max-width: 1200px;
-        }
-        .filters {
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-        }
-        .record-count {
-            font-weight: bold;
-            margin: 10px 0;
-        }
-    </style>
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body>
-    <header>
-        <a href="logout.php" onclick="return confirm('Log out?')">Logout</a>
-    </header>
+    <body>
+        <header>
+            <a href="logout.php" onclick="return confirm('Log out?')">Logout</a>
+        </header>
 
     <?php include('sidebar.php'); ?>
 

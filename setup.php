@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <title>Test Masterlist Setup</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
 <?php include('sidebar.php'); ?>

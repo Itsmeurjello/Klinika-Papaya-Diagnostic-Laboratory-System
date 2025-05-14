@@ -70,85 +70,18 @@ try {
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="assets/css/dashboard.css">
-
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background-color: #f1f1f1;
-        }
-
-        .main-content {
-            margin-left: 250px;
-            padding: 20px;
-        }
-
-        .test-summary-container {
-            margin-top: 30px;
-        }
-
-        .test-summary-table {
-            margin-top: 20px;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        header {
-            background-color: #f8f9fa;
-            padding: 10px 30px;
-            text-align: right;
-            position: fixed;
-            width: calc(100% - 250px);
-            top: 0;
-            z-index: 1000;
-            left: 250px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        header a {
-            color: #dc3545;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        
-        .status-badge {
-            font-size: 0.8rem;
-            padding: 0.25rem 0.5rem;
-        }
-        
-        .record-count {
-            margin: 10px 0;
-            font-weight: bold;
-        }
-        
-        .table-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-    </style>
+    <link rel="stylesheet" href="./assets/css/dashboard.css">
+    <link rel="stylesheet" href="./assets/css/style.css">
 </head>
 <body>
-    
-    <!-- Header -->
     <header>
         <a href="logout.php" onclick="return confirm('Log out?')">Logout</a>
     </header>
 
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <?php include('sidebar.php'); ?>
-    </div>
+    <?php include('sidebar.php'); ?>
 
-    <!-- Main Content -->
     <div class="main-content">
-        <div class="test-summary-container">
+        <div class="table-container">
             <h2>Test Summary</h2>
 
             <!-- Search Bar and Add Button -->

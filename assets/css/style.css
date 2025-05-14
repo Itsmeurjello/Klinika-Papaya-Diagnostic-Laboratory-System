@@ -1,106 +1,92 @@
-
-/* Header Styling */
-.header {
-    background-color: #f7c6d0;
-    padding: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 20px;
-    font-weight: bold;
-    color: #333;
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-    position: fixed;
-    width: 100%;
-    top: 0;
-    left: 0;
-    z-index: 1000;
-}
-
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    background-color: #f8f1f6;
-}
-
+/* styles.css - Create this file and include it in all pages */
 .sidebar {
-    width: 250px;
-    height: 100vh;
-    background: #f7c6d0;
-    color: #333;
-    padding-top: 20px;
-    position: fixed;
-    left: 0;
-    top: 0;
-    overflow-y: auto;
-    text-align: center;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  width: 250px;
+  height: 100vh;
+  position: fixed;
+  background-color: #feb1b7;
+  padding-top: 60px;
+  overflow-y: auto;
+  left: 0;
+  top: 0;
+  z-index: 1000;
 }
 
-.sidebar img {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    margin-bottom: 10px;
+.sidebar .logo {
+  text-align: center;
+  margin-bottom: 20px;
 }
 
-.sidebar h2 {
-    font-size: 18px;
-    margin-bottom: 10px;
-    color: #333;
+.sidebar .logo img {
+  width: 120px;
+  height: auto;
+  border-radius: 50%;
 }
 
 .sidebar a {
-    display: flex;
-    align-items: center;
-    justify-content: left;
-    gap: 10px;
-    color: #333;
-    text-decoration: none;
-    padding: 12px;
-    margin: 5px;
-    border-radius: 20px;
-    background: #fff;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
-    transition: background 0.3s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  font-size: 16px;
+  color: #ffffff;
+  text-decoration: none;
+  transition: background 0.3s ease, transform 0.2s ease;
 }
 
 .sidebar a:hover {
-    background: #e4a4b4;
-    transform: scale(1.05);
+  background-color: #495057;
+  transform: translateX(5px);
 }
 
-.content {
-    margin-left: 270px;
-    padding: 20px;
-    width: calc(100% - 270px);
-    text-align: center;
+.sidebar a.active {
+  background-color: #495057;
+  color: white;
+  transform: translateX(5px);
+  border-left: 4px solid #ffffff;
 }
 
-.header {
-    background: #f7c6d0;
-    padding: 15px;
-    text-align: center;
-    font-size: 24px;
-    font-weight: bold;
-    color: #333;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+.sidebar a i {
+  margin-right: 10px;
+  transition: transform 0.3s ease;
 }
 
-.header img {
-    height: 50px;
+.sidebar a:hover i,
+.sidebar a.active i {
+  transform: scale(1.2);
 }
 
-.card {
-    background: #dff0ff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
-    display: inline-block;
-    width: 80%;
+.main-content {
+  margin-left: 250px;
+  padding: 30px 40px;
+}
+
+header {
+  background-color: #f8f9fa;
+  padding: 10px 30px;
+  text-align: right;
+  position: fixed;
+  width: calc(100% - 250px);
+  top: 0;
+  z-index: 1000;
+  left: 250px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+header a {
+  color: #dc3545;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.table-container {
+  margin-top: 80px;
+  background-color: #fff;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 1150px;
+}
+
+.record-count {
+  font-weight: bold;
+  margin: 10px 0;
 }

@@ -4,73 +4,18 @@
     <meta charset="UTF-8">
     <title>Reports</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <style>
-        /* Sidebar Styles (same as patientlist.php) */
-        .sidebar {
-            height: 100vh;
-            width: 250px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background-color: #f8f9fa;
-            padding-top: 20px;
-            text-align: center; /* Centering sidebar links */
-        }
-
-        .sidebar a {
-            text-decoration: none;
-            color: #000;
-            padding: 10px 15px;
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        .sidebar a:hover {
-            background-color: #dc3545;
-            color: white;
-        }
-
-        /* Main content area */
-        .main-content {
-            margin-left: 250px;
-            padding: 20px;
-            text-align: center; /* Centering the text in the main content */
-        }
-
-        .container-fluid {
-            padding-top: 30px;
-        }
-
-        .btn {
-            margin-right: 10px;
-        }
-
-        .btn-primary, .btn-success, .btn-warning, .btn-info {
-            text-align: center; /* Center button text */
-        }
-
-        .card-body {
-            text-align: center; /* Center the content inside the card */
-        }
-
-        .modal-body {
-            text-align: center; /* Center content inside the modal */
-        }
-
-        .modal-header {
-            text-align: center; /* Center modal header text */
-        }
-    </style>
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
+    <header>
+        <a href="logout.php" onclick="return confirm('Log out?')">Logout</a>
+    </header>
 
-    <div class="sidebar">
-        <?php include('sidebar.php'); ?>
-    </div>
+    <?php include('sidebar.php'); ?>
 
-    <div class="main-content p-4">
-        <div class="container-fluid">
+    <div class="main-content">
+        <div class="table-container">
             <h2 class="mb-4">Reports Sales for that day</h2>
 
             <div class="mb-4 d-flex flex-wrap justify-content-center gap-3">
