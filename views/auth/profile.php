@@ -1,6 +1,7 @@
 <?php
 require_once '../../config/database.php';
 require_once '../../includes/auth.php';
+require_once '../../config/config.php';
 
 // Generate CSRF token
 $csrf_token = bin2hex(random_bytes(32));
@@ -45,7 +46,7 @@ include_once '../../views/layout/header.php';
                         <div class="row mb-4">
                             <div class="col-md-4 text-center">
                                 <div class="profile-img-container mb-3">
-                                    <img src="/assets/img/profile.jpg" alt="Profile Image" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                                    <img src="<?= BASE_PATH ?>/assets/image/profile.jpg" alt="Profile Image" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
                                 </div>
                                 <h5><?= htmlspecialchars($user['username']) ?></h5>
                                 <span class="badge bg-<?= $user['role'] === 'admin' ? 'danger' : 'info' ?>"><?= ucfirst(htmlspecialchars($user['role'])) ?></span>
@@ -136,7 +137,7 @@ document.getElementById('updateProfileForm').addEventListener('submit', async fu
     try {
         const formData = new FormData(this);
         
-        const response = await fetch('/controllers/auth_controller.php?action=update_profile', {
+        const response = await fetch('<?= BASE_PATH ?>/controllers/AuthController.php?action=update_profile', {
             method: 'POST',
             body: formData
         });
@@ -213,7 +214,7 @@ document.getElementById('changePasswordForm').addEventListener('submit', async f
     try {
         const formData = new FormData(this);
         
-        const response = await fetch('/controllers/auth_controller.php?action=change_password', {
+        const response = await fetch('<?= BASE_PATH ?>/controllers/AuthController.php?action=change_password', {
             method: 'POST',
             body: formData
         });

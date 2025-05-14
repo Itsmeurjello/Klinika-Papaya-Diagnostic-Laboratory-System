@@ -1,6 +1,7 @@
 <?php
 require_once '../../config/database.php';
 require_once '../../includes/auth.php';
+require_once dirname(__DIR__, 2) . '/config/config.php';
 
 // Generate CSRF token
 $csrf_token = bin2hex(random_bytes(32));
@@ -106,7 +107,7 @@ include_once '../../views/layout/header.php';
                 <p><?= htmlspecialchars($error) ?></p>
                 <hr>
                 <p class="mb-0">
-                    <a href="/views/tests/summary.php" class="btn btn-primary">Go to Test Summary</a>
+                    <a href="<?= BASE_PATH ?>/views/tests/summary.php" class="btn btn-primary">Go to Test Summary</a>
                 </p>
             </div>
         <?php elseif ($test): ?>
@@ -361,7 +362,7 @@ include_once '../../views/layout/header.php';
                 </div>
                 <div class="card-footer">
                     <div class="d-flex justify-content-between">
-                        <a href="/views/tests/summary.php" class="btn btn-secondary">Cancel</a>
+                        <a href="<?= BASE_PATH ?>/views/tests/summary.php" class="btn btn-secondary">Cancel</a>
                         <button type="button" id="saveResultBtn" class="btn btn-primary">Save Result</button>
                     </div>
                 </div>
@@ -388,7 +389,7 @@ document.getElementById('saveResultBtn')?.addEventListener('click', async functi
     const formData = new FormData(form);
     
     try {
-        const response = await fetch('/controllers/test_controller.php?action=save_result', {
+        const response = await fetch('<?= BASE_PATH ?>/controllers/TestController.php?action=save_result', {
             method: 'POST',
             body: formData
         });
@@ -403,7 +404,7 @@ document.getElementById('saveResultBtn')?.addEventListener('click', async functi
                 confirmButtonText: 'View Results'
             }).then((result) => {
                 // Redirect to test summary or view result page
-                window.location.href = `/views/tests/view_result.php?id=${result.test_id}`;
+                window.location.href = `<?= BASE_PATH ?>/views/tests/view_result.php?id=${result.test_id}`;
             });
         } else {
             Swal.fire({

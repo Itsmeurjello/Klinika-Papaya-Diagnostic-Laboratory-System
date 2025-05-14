@@ -1,8 +1,8 @@
 <?php
 require_once '../../config/database.php';
 require_once '../../includes/auth.php';
+require_once dirname(__DIR__, 2) . '/config/config.php';
 
-// Get current page for pagination
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 $recordsPerPage = 10;
 $offset = ($page - 1) * $recordsPerPage;
@@ -198,7 +198,7 @@ include_once '../../views/layout/header.php';
                                             <button class="btn btn-danger delete-test" data-id="<?= $test['id'] ?>">
                                                 <i class="bi bi-trash"></i>
                                             </button>
-                                            <a href="/views/reports/print_result.php?id=<?= $test['id'] ?>" class="btn btn-info">
+                                            <a href="<?= BASE_PATH ?>/views/reports/print_result.php?id=<?= $test['id'] ?>" class="btn btn-info">
                                                 <i class="bi bi-printer"></i>
                                             </a>
                                         </div>
@@ -271,7 +271,7 @@ async function deleteTest(testId) {
         formData.append('test_id', testId);
         formData.append('csrf_token', '<?= $_SESSION['csrf_token'] ?? '' ?>');
         
-        const response = await fetch('/controllers/test_controller.php?action=delete', {
+        const response = await fetch('<?= BASE_PATH ?>/controllers/test_controller.php?action=delete', {
             method: 'POST',
             body: formData
         });

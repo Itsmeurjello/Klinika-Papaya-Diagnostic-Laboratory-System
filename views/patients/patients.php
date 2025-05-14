@@ -5,18 +5,16 @@ require_once '../../includes/auth.php';
 // Generate CSRF token
 $csrf_token = bin2hex(random_bytes(32));
 $_SESSION['csrf_token'] = $csrf_token;
+require_once dirname(__DIR__, 2)  . '/config/config.php';
 
-// Get current page for pagination
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 $recordsPerPage = 10;
 $offset = ($page - 1) * $recordsPerPage;
 
 try {
-    // Get total count of patients
     $countStmt = $connect->query("SELECT COUNT(*) FROM patients WHERE delete_status = 0");
     $totalPatients = $countStmt->fetchColumn();
     
-    // Get patients for current page
     $stmt = $connect->prepare("SELECT * FROM patients WHERE delete_status = 0 ORDER BY full_name LIMIT :limit OFFSET :offset");
     $stmt->bindValue(':limit', $recordsPerPage, PDO::PARAM_INT);
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
@@ -25,18 +23,15 @@ try {
     
     $totalPages = ceil($totalPatients / $recordsPerPage);
 } catch (PDOException $e) {
-    // Log error and set flash message
     error_log("Database error: " . $e->getMessage());
     $_SESSION['flash_message'] = "Error loading patients. Please try again.";
     $_SESSION['flash_type'] = "error";
     
-    // Initialize with empty arrays to prevent errors
     $patients = [];
     $totalPatients = 0;
     $totalPages = 1;
 }
 
-// Include header
 include_once '../../views/layout/header.php';
 ?>
 
@@ -351,14 +346,12 @@ include_once '../../views/layout/header.php';
 </div>
 
 <script>
-// Generate Sample ID
 function generateSampleId() {
     const prefix = 'LAB-';
-    const randomNum = Math.floor(100000 + Math.random() * 900000); // 6-digit number
+    const randomNum = Math.floor(100000 + Math.random() * 900000); 
     return prefix + randomNum;
 }
 
-// Search functionality
 document.getElementById('searchPatient').addEventListener('keyup', function() {
     const value = this.value.toLowerCase();
     const rows = document.querySelectorAll('#patientsTableBody tr');
@@ -368,11 +361,9 @@ document.getElementById('searchPatient').addEventListener('keyup', function() {
         row.style.display = text.includes(value) ? '' : 'none';
     });
     
-    // Update visible count
     updateVisibleCount();
 });
 
-// Gender filter
 document.getElementById('filterGender').addEventListener('change', function() {
     const value = this.value.toLowerCase();
     const rows = document.querySelectorAll('#patientsTableBody tr');
@@ -386,7 +377,6 @@ document.getElementById('filterGender').addEventListener('change', function() {
         }
     });
     
-    // Update visible count
     updateVisibleCount();
 });
 
@@ -395,23 +385,20 @@ function updateVisibleCount() {
     document.getElementById('patientCount').textContent = visibleRows;
 }
 
-// Add Patient
 document.getElementById('savePatientBtn').addEventListener('click', async function() {
     const form = document.getElementById('addPatientForm');
     const formData = new FormData(form);
     
-    // Validate form
     if (!form.checkValidity()) {
         form.reportValidity();
         return;
     }
     
-    // Disable button and show loading state
     this.disabled = true;
     this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
     
     try {
-        const response = await fetch('/controllers/patient_controller.php?action=add', {
+        const response = await fetch('<?= BASE_PATH ?>/controllers/PatientController.php?action=add', {
             method: 'POST',
             body: formData
         });
@@ -427,7 +414,6 @@ document.getElementById('savePatientBtn').addEventListener('click', async functi
                 showConfirmButton: false
             });
             
-            // Reload the page to show updated list
             setTimeout(() => {
                 window.location.reload();
             }, 2000);
@@ -452,7 +438,6 @@ document.getElementById('savePatientBtn').addEventListener('click', async functi
     }
 });
 
-// Edit Patient - Open Modal and Fill Data
 document.querySelectorAll('.edit-patient').forEach(button => {
     button.addEventListener('click', function() {
         const id = this.getAttribute('data-id');
@@ -461,36 +446,31 @@ document.querySelectorAll('.edit-patient').forEach(button => {
         const age = this.getAttribute('data-age');
         const birthDate = this.getAttribute('data-birth');
         
-        // Fill form with patient data
         document.getElementById('editPatientId').value = id;
         document.getElementById('editFullName').value = name;
         document.getElementById('editGender').value = gender;
         document.getElementById('editAge').value = age;
         document.getElementById('editBirthDate').value = birthDate;
         
-        // Show modal
         const modal = new bootstrap.Modal(document.getElementById('editPatientModal'));
         modal.show();
     });
 });
 
-// Update Patient
 document.getElementById('updatePatientBtn').addEventListener('click', async function() {
     const form = document.getElementById('editPatientForm');
     const formData = new FormData(form);
     
-    // Validate form
     if (!form.checkValidity()) {
         form.reportValidity();
         return;
     }
     
-    // Disable button and show loading state
     this.disabled = true;
     this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
     
     try {
-        const response = await fetch('/controllers/patient_controller.php?action=update', {
+        const response = await fetch('<?= BASE_PATH ?>/controllers/AuthController.php?action=update_profile', {
             method: 'POST',
             body: formData
         });
@@ -506,7 +486,6 @@ document.getElementById('updatePatientBtn').addEventListener('click', async func
                 showConfirmButton: false
             });
             
-            // Reload the page to show updated list
             setTimeout(() => {
                 window.location.reload();
             }, 2000);
@@ -525,13 +504,11 @@ document.getElementById('updatePatientBtn').addEventListener('click', async func
         });
         console.error('Error:', error);
     } finally {
-        // Reset button state
         this.disabled = false;
         this.innerHTML = 'Update Patient';
     }
 });
 
-// Delete Patient
 document.querySelectorAll('.delete-patient').forEach(button => {
     button.addEventListener('click', function() {
         const id = this.getAttribute('data-id');
@@ -554,7 +531,7 @@ document.querySelectorAll('.delete-patient').forEach(button => {
                     formData.append('patient_id', id);
                     formData.append('csrf_token', '<?= $csrf_token ?>');
                     
-                    const response = await fetch('/controllers/patient_controller.php?action=delete', {
+                    const response = await fetch('<?= BASE_PATH ?>/controllers/PatientController.php?action=delete', {
                         method: 'POST',
                         body: formData
                     });
@@ -570,13 +547,11 @@ document.querySelectorAll('.delete-patient').forEach(button => {
                             showConfirmButton: false
                         });
                         
-                        // Remove the row from the table with animation
                         const row = document.getElementById(`patient-row-${id}`);
                         row.style.transition = 'opacity 0.5s';
                         row.style.opacity = '0';
                         setTimeout(() => {
                             row.remove();
-                            // Update count
                             document.getElementById('patientCount').textContent = 
                                 document.querySelectorAll('#patientsTableBody tr').length;
                         }, 500);
@@ -600,38 +575,31 @@ document.querySelectorAll('.delete-patient').forEach(button => {
     });
 });
 
-// Create Request - Open Modal and Fill Data
 document.querySelectorAll('.create-request').forEach(button => {
     button.addEventListener('click', function() {
         const id = this.getAttribute('data-id');
         const name = this.getAttribute('data-name');
         
-        // Fill form with patient data
         document.getElementById('requestPatientId').value = id;
         document.getElementById('requestPatientIdDisplay').value = id;
         document.getElementById('requestPatientName').value = name;
         
-        // Generate sample ID
         document.getElementById('sampleId').value = generateSampleId();
         
-        // Show modal
         const modal = new bootstrap.Modal(document.getElementById('createRequestModal'));
         modal.show();
     });
 });
 
-// Submit Request
 document.getElementById('submitRequestBtn').addEventListener('click', async function() {
     const form = document.getElementById('createRequestForm');
     const formData = new FormData(form);
     
-    // Validate form
     if (!form.checkValidity()) {
         form.reportValidity();
         return;
     }
     
-    // Validate sample ID format
     const sampleId = document.getElementById('sampleId').value;
     if (!/^LAB-\d{6}$/.test(sampleId)) {
         Swal.fire({
@@ -642,12 +610,11 @@ document.getElementById('submitRequestBtn').addEventListener('click', async func
         return;
     }
     
-    // Disable button and show loading state
     this.disabled = true;
     this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
     
     try {
-        const response = await fetch('/controllers/request_controller.php?action=create', {
+        const response = await fetch('<?= BASE_PATH ?>/controllers/RequestController.php?action=create', {
             method: 'POST',
             body: formData
         });
@@ -665,7 +632,7 @@ document.getElementById('submitRequestBtn').addEventListener('click', async func
                 cancelButtonText: 'Stay on this page'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    window.location.href = '/views/requests/pending.php';
+                    window.location.href = '<?= BASE_PATH ?>/views/requests/pending.php';
                 } else {
                     const modal = bootstrap.Modal.getInstance(document.getElementById('createRequestModal'));
                     modal.hide();
@@ -686,19 +653,16 @@ document.getElementById('submitRequestBtn').addEventListener('click', async func
         });
         console.error('Error:', error);
     } finally {
-        // Reset button state
         this.disabled = false;
         this.innerHTML = 'Submit Request';
     }
 });
 
-// View Patient
 document.querySelectorAll('.view-patient').forEach(button => {
     button.addEventListener('click', function() {
         const id = this.getAttribute('data-id');
         
-        // Redirect to patient view page
-        window.location.href = `/views/patients/view.php?id=${id}`;
+        window.location.href = `<?= BASE_PATH ?>/views/patients/view.php?id=${id}`;
     });
 });
 </script>

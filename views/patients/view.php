@@ -1,6 +1,7 @@
 <?php
 require_once '../../config/database.php';
 require_once '../../includes/auth.php';
+require_once '../../config/config.php';
 
 // Check if patient ID is provided
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
@@ -79,7 +80,7 @@ include_once '../../views/layout/header.php';
                         <div class="d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">Patient Information</h5>
                             <div>
-                                <a href="index.php" class="btn btn-sm btn-light">
+                                <a href="patients.php" class="btn btn-sm btn-light">
                                     <i class="bi bi-arrow-left"></i> Back to List
                                 </a>
                                 <button class="btn btn-sm btn-warning ms-2 edit-patient" 
@@ -195,11 +196,11 @@ include_once '../../views/layout/header.php';
                                             <?php endif; ?>
                                         </td>
                                         <td>
-                                            <a href="/views/tests/view_result.php?id=<?= $test['id'] ?>" class="btn btn-sm btn-primary">
+                                            <a href="<?= BASE_PATH ?>/views/tests/view_result.php?id=<?= $test['id'] ?>" class="btn btn-sm btn-primary">
                                                 <i class="bi bi-eye"></i> View
                                             </a>
                                             <?php if ($test['status'] != 'Completed'): ?>
-                                                <a href="/views/tests/add_result.php?id=<?= $test['id'] ?>" class="btn btn-sm btn-success">
+                                                <a href="<?= BASE_PATH ?>/views/tests/add_result.php?id=<?= $test['id'] ?>" class="btn btn-sm btn-success">
                                                     <i class="bi bi-pencil"></i> Add Result
                                                 </a>
                                             <?php endif; ?>
@@ -242,7 +243,7 @@ include_once '../../views/layout/header.php';
                                         <td><?= htmlspecialchars($request['physician'] ?? 'N/A') ?></td>
                                         <td><span class="badge bg-warning">Pending</span></td>
                                         <td>
-                                            <a href="/views/requests/view_request.php?id=<?= $request['id'] ?>" class="btn btn-sm btn-primary">
+                                            <a href="<?= BASE_PATH ?>/views/requests/view_request.php?id=<?= $request['id'] ?>" class="btn btn-sm btn-primary">
                                                 <i class="bi bi-eye"></i> View
                                             </a>
                                         </td>
@@ -284,7 +285,7 @@ include_once '../../views/layout/header.php';
                                         <td><?= htmlspecialchars(substr($request['clinical_info'] ?? 'N/A', 0, 50)) . (strlen($request['clinical_info'] ?? '') > 50 ? '...' : '') ?></td>
                                         <td><span class="badge bg-success">Approved</span></td>
                                         <td>
-                                            <a href="/views/tests/add_result.php?request_id=<?= $request['id'] ?>" class="btn btn-sm btn-success">
+                                            <a href="<?= BASE_PATH ?>/views/tests/add_result.php?request_id=<?= $request['id'] ?>" class="btn btn-sm btn-success">
                                                 <i class="bi bi-plus-circle"></i> Add Result
                                             </a>
                                         </td>
@@ -488,7 +489,7 @@ document.getElementById('updatePatientBtn').addEventListener('click', async func
     this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
     
     try {
-        const response = await fetch('/controllers/patient_controller.php?action=update', {
+        const response = await fetch('<?= BASE_PATH ?>/controllers/PatientController.php?action=update', {
             method: 'POST',
             body: formData
         });
@@ -556,7 +557,7 @@ document.getElementById('submitRequestBtn').addEventListener('click', async func
     this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
     
     try {
-        const response = await fetch('/controllers/request_controller.php?action=create', {
+        const response = await fetch('<?= BASE_PATH ?>/controllers/RequestController.php?action=create', {
             method: 'POST',
             body: formData
         });
@@ -571,7 +572,6 @@ document.getElementById('submitRequestBtn').addEventListener('click', async func
                 footer: `Sample ID: ${result.sample_id}`,
                 confirmButtonText: 'OK'
             }).then(() => {
-                // Reload the page to show updated pending requests
                 window.location.reload();
             });
         } else {
@@ -589,7 +589,6 @@ document.getElementById('submitRequestBtn').addEventListener('click', async func
         });
         console.error('Error:', error);
     } finally {
-        // Reset button state
         this.disabled = false;
         this.innerHTML = 'Submit Request';
     }

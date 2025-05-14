@@ -1,24 +1,21 @@
 <?php
 require_once '../../config/database.php';
 require_once '../../includes/auth.php';
+require_once dirname(__DIR__, 2) . '/config/config.php';
 
-// Generate CSRF token
 $csrf_token = bin2hex(random_bytes(32));
 $_SESSION['csrf_token'] = $csrf_token;
 
-// Get current page for pagination
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 $recordsPerPage = 10;
 $offset = ($page - 1) * $recordsPerPage;
 
 try {
-    // Get total count of pending requests
     $countStmt = $connect->prepare("SELECT COUNT(*) FROM pending_requests WHERE status = 'Pending'");
     $countStmt->execute();
     $totalPending = $countStmt->fetchColumn();
     $totalPages = ceil($totalPending / $recordsPerPage);
     
-    // Get pending requests for current page
     $stmt = $connect->prepare("
         SELECT pr.*, p.full_name, p.gender, p.age, p.birth_date 
         FROM pending_requests pr
@@ -33,18 +30,15 @@ try {
     $pendingRequests = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
 } catch (PDOException $e) {
-    // Log error and set flash message
     error_log("Database error: " . $e->getMessage());
     $_SESSION['flash_message'] = "Error loading pending requests. Please try again.";
     $_SESSION['flash_type'] = "error";
     
-    // Initialize with empty arrays to prevent errors
     $pendingRequests = [];
     $totalPending = 0;
     $totalPages = 1;
 }
 
-// Include header
 include_once '../../views/layout/header.php';
 ?>
 
@@ -341,7 +335,7 @@ document.querySelectorAll('.view-request').forEach(button => {
         
         try {
             // Fetch request details
-            const response = await fetch(`/controllers/request_controller.php?action=get_details&id=${requestId}`);
+            const response = await fetch(`<?= BASE_PATH ?>/controllers/RequestController.php?action=get_details&id=${requestId}`);
             const result = await response.json();
             
             if (result.success) {
@@ -508,7 +502,7 @@ async function approveRequest(requestId, patientId) {
         formData.append('patient_id', patientId);
         formData.append('csrf_token', '<?= $csrf_token ?>');
         
-        const response = await fetch('/controllers/request_controller.php?action=approve', {
+        const response = await fetch('<?= BASE_PATH ?>/controllers/RequestController.php?action=approve', {
             method: 'POST',
             body: formData
         });
@@ -587,7 +581,7 @@ async function rejectRequest(requestId, patientId, reason) {
         formData.append('reject_reason', reason);
         formData.append('csrf_token', '<?= $csrf_token ?>');
         
-        const response = await fetch('/controllers/request_controller.php?action=reject', {
+        const response = await fetch('<?= BASE_PATH ?>/controllers/RequestController.php?action=reject', {
             method: 'POST',
             body: formData
         });

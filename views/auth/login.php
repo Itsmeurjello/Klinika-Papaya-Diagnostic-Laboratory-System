@@ -4,6 +4,7 @@ if (isset($_SESSION['username'])) {
     header("Location: /index.php");
     exit();
 }
+require_once '../../config/config.php';
 
 $errMsg = isset($_SESSION['login_error']) ? $_SESSION['login_error'] : '';
 unset($_SESSION['login_error']);
@@ -181,7 +182,7 @@ require_once '../../config/database.php';
                     timer: 1500,
                     showConfirmButton: false
                 }).then(() => {
-                    window.location.href = "/Klinika-Papaya-Diagnostic-Laboratory-System" + result.redirect || '/Klinika-Papaya-Diagnostic-Laboratory-System/index.php';
+                    window.location.href = "<?= BASE_PATH ?>" + result.redirect || '<?= BASE_PATH ?>/index.php';
                 });
             } else {
                 Swal.fire({

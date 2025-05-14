@@ -2,6 +2,8 @@
 require_once '../../config/database.php';
 require_once '../../includes/auth.php';
 
+require_once '../../config/config.php';
+
 // Check if user is admin
 if ($_SESSION['role'] !== 'admin') {
     $_SESSION['flash_message'] = "Unauthorized access. Admin privileges required.";
@@ -69,7 +71,7 @@ include_once '../../views/layout/header.php';
                             </div>
                             
                             <div class="d-flex justify-content-between">
-                                <a href="/index.php" class="btn btn-secondary">Cancel</a>
+                                <a href="<?= BASE_PATH ?>/index.php" class="btn btn-secondary">Cancel</a>
                                 <button type="submit" class="btn btn-primary">Add User</button>
                             </div>
                         </form>
@@ -145,7 +147,7 @@ document.getElementById('addUserForm').addEventListener('submit', async function
     try {
         const formData = new FormData(this);
         
-        const response = await fetch('/controllers/auth_controller.php?action=add_user', {
+        const response = await fetch('/controllers/AuthController.php?action=add_user', {
             method: 'POST',
             body: formData
         });

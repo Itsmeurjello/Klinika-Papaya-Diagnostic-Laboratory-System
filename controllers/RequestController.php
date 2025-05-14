@@ -3,6 +3,7 @@
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/auth.php';
 
 class RequestController {
     private $db;
@@ -45,7 +46,6 @@ class RequestController {
      * Create a new test request
      */
     private function createRequest() {
-        // Validate CSRF token
         if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
             $this->respondWithError('Invalid CSRF token');
             return;
@@ -143,11 +143,15 @@ class RequestController {
             $stmt->bindParam(':age', $patient['age'], PDO::PARAM_INT);
             $stmt->bindParam(':birth_date', $patient['birth_date']);
             $stmt->bindParam(':test_name', $_POST['test_name']);
-            $stmt->bindParam(':clinical_info', $_POST['clinical_info'] ?? null);
-            $stmt->bindParam(':physician', $_POST['physician'] ?? null);
+            $clinicalInfo = $_POST['clinical_info'] ?? "N/A";
+            $stmt->bindParam(':clinical_info', $clinicalInfo);
+            $physician = $_POST['physician'] ?? "N/A";
+            $stmt->bindParam(':physician', $physician);
             $stmt->bindParam(':requested_by', $_SESSION['username']);
-            $stmt->bindParam(':urgency', $_POST['urgency'] ?? 'Routine');
-            $stmt->bindParam(':payment_status', $_POST['payment_status'] ?? 'Unpaid');
+            $urgency = $_POST['urgency'] ?? 'Routine';
+            $stmt->bindParam(':urgency', $urgency);
+            $paymentStatus = $_POST['payment_status'] ?? 'Unpaid';
+            $stmt->bindParam(':payment_status', $paymentStatus);
             
             $stmt->execute();
             

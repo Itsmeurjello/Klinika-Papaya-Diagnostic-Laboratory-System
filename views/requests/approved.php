@@ -106,7 +106,7 @@ include_once '../../views/layout/header.php';
                                                     data-id="<?= $request['id'] ?>">
                                                 <i class="bi bi-eye"></i>
                                             </button>
-                                            <a href="/views/tests/add_result.php?request_id=<?= $request['id'] ?>" 
+                                            <a href="<?= BASE_PATH ?>/views/tests/add_result.php?request_id=<?= $request['id'] ?>" 
                                                class="btn btn-success">
                                                 <i class="bi bi-clipboard-plus"></i> Test
                                             </a>
@@ -282,7 +282,7 @@ document.querySelectorAll('.view-request').forEach(button => {
         
         try {
             // Fetch request details
-            const response = await fetch(`/controllers/request_controller.php?action=get_details&id=${requestId}`);
+            const response = await fetch(`<?= BASE_PATH ?>/controllers/RequestController.php?action=get_details&id=${requestId}`);
             const result = await response.json();
             
             if (result.success) {
@@ -303,7 +303,7 @@ document.querySelectorAll('.view-request').forEach(button => {
                 document.getElementById('viewClinicalInfo').value = result.request.clinical_info || 'N/A';
                 
                 // Update Add Result button href
-                document.getElementById('addResultBtn').href = `/views/tests/add_result.php?request_id=${result.request.id}`;
+                document.getElementById('addResultBtn').href = `<?= BASE_PATH ?>/views/tests/add_result.php?request_id=${result.request.id}`;
                 
                 // Show modal
                 const modal = new bootstrap.Modal(document.getElementById('viewRequestModal'));
@@ -366,7 +366,7 @@ async function moveToPending(requestId) {
         formData.append('request_id', requestId);
         formData.append('csrf_token', '<?= $csrf_token ?>');
         
-        const response = await fetch('/controllers/request_controller.php?action=move_to_pending', {
+        const response = await fetch('<?= BASE_PATH ?>/controllers/RequestController.php?action=move_to_pending', {
             method: 'POST',
             body: formData
         });

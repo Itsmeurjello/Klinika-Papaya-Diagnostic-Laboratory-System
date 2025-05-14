@@ -1,6 +1,7 @@
 <?php
 require_once './config/database.php';
 require_once './includes/auth.php';
+require_once './config/config.php';
 
 checkAuth();
 
@@ -36,7 +37,6 @@ try {
     
 } catch (PDOException $e) {
     error_log('Database error: ' . $e->getMessage());
-    // Set default values if query fails
     $totalPatients = 0;
     $pendingRequests = 0;
     $approvedRequests = 0;
@@ -73,7 +73,7 @@ try {
                         </div>
                     </div>
                     <div class="card-footer bg-transparent border-0">
-                        <a href="/views/patients/index.php" class="text-white text-decoration-none small">
+                        <a href="<?= BASE_PATH ?>/views/patients/patients.php" class="text-white text-decoration-none small">
                             View Details <i class="bi bi-arrow-right"></i>
                         </a>
                     </div>
@@ -94,7 +94,7 @@ try {
                         </div>
                     </div>
                     <div class="card-footer bg-transparent border-0">
-                        <a href="/views/requests/pending.php" class="text-dark text-decoration-none small">
+                        <a href="<?= BASE_PATH ?>/views/requests/pending.php" class="text-dark text-decoration-none small">
                             View Details <i class="bi bi-arrow-right"></i>
                         </a>
                     </div>
@@ -115,7 +115,7 @@ try {
                         </div>
                     </div>
                     <div class="card-footer bg-transparent border-0">
-                        <a href="/views/tests/summary.php" class="text-white text-decoration-none small">
+                        <a href="<?= BASE_PATH ?>/views/tests/summary.php" class="text-white text-decoration-none small">
                             View Details <i class="bi bi-arrow-right"></i>
                         </a>
                     </div>
@@ -137,7 +137,7 @@ try {
                     </div>
                     <div class="card-footer bg-transparent border-0">
                         <?php if ($_SESSION['role'] === 'admin'): ?>
-                            <a href="/views/auth/add_user.php" class="text-white text-decoration-none small">
+                            <a href="<?= BASE_PATH ?>/views/auth/add_user.php" class="text-white text-decoration-none small">
                                 Add User <i class="bi bi-arrow-right"></i>
                             </a>
                         <?php else: ?>
@@ -159,25 +159,25 @@ try {
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-3 mb-3">
-                                <a href="/views/patients/index.php" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                                <a href="<?= BASE_PATH ?>/views/patients/patients.php" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
                                     <i class="bi bi-person-plus-fill display-6 mb-2"></i>
                                     <span>Add New Patient</span>
                                 </a>
                             </div>
                             <div class="col-md-3 mb-3">
-                                <a href="/views/requests/pending.php" class="btn btn-outline-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                                <a href="<?= BASE_PATH ?>/views/requests/pending.php" class="btn btn-outline-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
                                     <i class="bi bi-clipboard-plus display-6 mb-2"></i>
                                     <span>Review Pending Requests</span>
                                 </a>
                             </div>
                             <div class="col-md-3 mb-3">
-                                <a href="/views/tests/add_result.php" class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                                <a href="<?= BASE_PATH ?>/views/tests/summary.php" class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
                                     <i class="bi bi-file-earmark-medical display-6 mb-2"></i>
                                     <span>Add Test Result</span>
                                 </a>
                             </div>
                             <div class="col-md-3 mb-3">
-                                <a href="/views/reports/index.php" class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                                <a href="<?= BASE_PATH ?>/views/reports/reports.php" class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
                                     <i class="bi bi-graph-up display-6 mb-2"></i>
                                     <span>Generate Reports</span>
                                 </a>
@@ -193,7 +193,7 @@ try {
                 <div class="card h-100">
                     <div class="card-header bg-light d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Recent Patients</h5>
-                        <a href="/views/patients/index.php" class="btn btn-sm btn-primary">View All</a>
+                        <a href="<?= BASE_PATH ?>/views/patients/patients.php" class="btn btn-sm btn-primary">View All</a>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -216,7 +216,7 @@ try {
                                                 <td><?= htmlspecialchars($patient['gender']) ?></td>
                                                 <td><?= htmlspecialchars($patient['age']) ?></td>
                                                 <td>
-                                                    <a href="/views/patients/view.php?id=<?= $patient['patient_id'] ?>" class="btn btn-sm btn-info">
+                                                    <a href="<?= BASE_PATH ?>/views/patients/view.php?id=<?= $patient['patient_id'] ?>" class="btn btn-sm btn-info">
                                                         <i class="bi bi-eye"></i>
                                                     </a>
                                                 </td>
@@ -238,7 +238,7 @@ try {
                 <div class="card h-100">
                     <div class="card-header bg-light d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Recent Test Results</h5>
-                        <a href="/views/tests/summary.php" class="btn btn-sm btn-primary">View All</a>
+                        <a href="<?= BASE_PATH ?>/views/tests/summary.php" class="btn btn-sm btn-primary">View All</a>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -265,7 +265,7 @@ try {
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <a href="/views/tests/view_result.php?id=<?= $test['id'] ?>" class="btn btn-sm btn-info">
+                                                    <a href="<?= BASE_PATH ?>/views/tests/view_result.php?id=<?= $test['id'] ?>" class="btn btn-sm btn-info">
                                                         <i class="bi bi-eye"></i>
                                                     </a>
                                                 </td>

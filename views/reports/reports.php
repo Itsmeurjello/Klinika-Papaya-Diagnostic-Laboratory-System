@@ -1,6 +1,7 @@
 <?php
 require_once '../../config/database.php';
 require_once '../../includes/auth.php';
+require_once '../../config/config.php';
 
 // Include header
 include_once '../../views/layout/header.php';
@@ -20,7 +21,7 @@ include_once '../../views/layout/header.php';
                         </div>
                         <h5 class="card-title">Income Report</h5>
                         <p class="card-text">View daily, monthly, and annual income reports.</p>
-                        <a href="/views/reports/income.php" class="btn btn-success">View Report</a>
+                        <a href="<?= BASE_PATH ?>/views/reports/income.php" class="btn btn-success">View Report</a>
                     </div>
                 </div>
             </div>
@@ -34,7 +35,7 @@ include_once '../../views/layout/header.php';
                         </div>
                         <h5 class="card-title">Patient Census</h5>
                         <p class="card-text">View patient statistics and demographics.</p>
-                        <a href="/views/reports/census.php" class="btn btn-primary">View Report</a>
+                        <a href="<?= BASE_PATH ?>/views/reports/census.php" class="btn btn-primary">View Report</a>
                     </div>
                 </div>
             </div>
@@ -48,7 +49,7 @@ include_once '../../views/layout/header.php';
                         </div>
                         <h5 class="card-title">Laboratory Workload</h5>
                         <p class="card-text">View test volume and workload statistics.</p>
-                        <a href="/views/reports/workload.php" class="btn btn-warning">View Report</a>
+                        <a href="<?= BASE_PATH ?>/views/reports/workload.php" class="btn btn-warning">View Report</a>
                     </div>
                 </div>
             </div>
@@ -62,7 +63,7 @@ include_once '../../views/layout/header.php';
                         </div>
                         <h5 class="card-title">Reagent Consumption</h5>
                         <p class="card-text">Track reagent usage and inventory levels.</p>
-                        <a href="/views/reports/consumption.php" class="btn btn-info">View Report</a>
+                        <a href="<?= BASE_PATH ?>/views/reports/consumption.php" class="btn btn-info">View Report</a>
                     </div>
                 </div>
             </div>
@@ -103,7 +104,6 @@ include_once '../../views/layout/header.php';
                         <div class="col-md-4">
                             <label for="format" class="form-label">Format</label>
                             <select class="form-select" id="format" name="format" required>
-                                <option value="html">HTML</option>
                                 <option value="pdf">PDF</option>
                                 <option value="excel">Excel</option>
                                 <option value="csv">CSV</option>

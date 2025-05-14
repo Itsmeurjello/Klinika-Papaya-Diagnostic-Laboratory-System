@@ -3,7 +3,7 @@ require_once __DIR__ . '/../../config/config.php';
 ?>
 <div class="sidebar">
     <div class="logo">
-        <img src="../../assets/image/profile.jpg" alt="Logo">
+        <img src="<?= BASE_PATH ?>/assets/image/profile.jpg" alt="Logo">
         <h4 class="mt-2 text-center text-white">Klinika Papaya</h4>
     </div>
     
@@ -25,10 +25,17 @@ require_once __DIR__ . '/../../config/config.php';
     <a href="<?= BASE_PATH ?>/views/tests/results.php" class="<?= $current_page == 'results.php' ? 'active' : '' ?>">
         <i class="bi bi-graph-up"></i> Test Results
     </a>
+    <a href="<?= BASE_PATH ?>/views/records/index.php" class="<?= $current_page == 'index.php' && dirname($_SERVER['PHP_SELF']) == '/views/records' ? 'active' : '' ?>">
+        <i class="bi bi-folder-fill"></i> Records
+    </a>
     <a href="<?= BASE_PATH ?>/views/reports/reports.php" class="<?= $current_page == 'reports.php' && dirname($_SERVER['PHP_SELF']) == '/views/reports' ? 'active' : '' ?>">
         <i class="bi bi-bar-chart"></i> Reports
     </a>
-
+    <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
+    <a href="<?= BASE_PATH ?>/views/setup/index.php" class="<?= $current_page == 'index.php' && dirname($_SERVER['PHP_SELF']) == '/views/setup' ? 'active' : '' ?>">
+        <i class="bi bi-gear-fill"></i> Setup
+    </a>
+    <?php endif; ?>
 </div>
 
 <style>

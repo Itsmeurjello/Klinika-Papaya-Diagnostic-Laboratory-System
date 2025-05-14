@@ -21,7 +21,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-    <link rel="stylesheet" href="../../assets/css/dashboard.css">
+    <link rel="stylesheet" href="<?= BASE_PATH ?>/assets/css/dashboard.css">
     <style>
         body {
             background-color: #f1f3f5;
@@ -84,4 +84,4 @@ $current_page = basename($_SERVER['PHP_SELF']);
         </div>
     </header>
 
-    <?php include __DIR__ . '/sidebar.php'; ?> 
+    <?php include __DIR__ . '/sidebar.php'; ?>
