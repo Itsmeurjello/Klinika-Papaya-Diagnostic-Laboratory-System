@@ -4,97 +4,182 @@ require_once 'config/db_connect.php';
 
 header('Content-Type: application/json');
 
+// Check authentication
+if (!isset($_SESSION['username'])) {
+    die(json_encode(['success' => false, 'message' => 'Unauthorized']));
+}
+
+// Check CSRF token
+if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+    die(json_encode(['success' => false, 'message' => 'Invalid CSRF token']));
+}
+
+// Validate required fields
+if (empty($_POST['patient_id'])) {
+    die(json_encode(['success' => false, 'message' => 'Missing patient ID']));
+}
+
+// Get current user ID
+$username = $_SESSION['username'];
+$user_id = $_SESSION['user_id'] ?? $username; // Fallback to username if user_id not set
+
 try {
-    // Required fields
-    if (!isset($_POST['patient_id'])) {
-        throw new Exception('Patient ID is required');
-    }
-
-    $patientId = $_POST['patient_id'];
-    $sampleId = $_POST['sample_id'] ?? null;
-
     // Start transaction
     $connect->beginTransaction();
     
-    // 1. First check if this request is already approved
-    $checkQuery = "SELECT COUNT(*) FROM request_list 
-                  WHERE patient_id = ?";
-    $checkParams = [$patientId];
+    $patient_id = $_POST['patient_id'];
+    $sample_id = $_POST['sample_id'] ?? null;
+    $action = $_POST['action'] ?? 'approve'; // Default to approve if not specified
     
-    if ($sampleId) {
-        $checkQuery .= " AND sample_id = ?";
-        $checkParams[] = $sampleId;
+    // Build where clause
+    $whereClause = "patient_id = :patient_id";
+    $params = [':patient_id' => $patient_id];
+    
+    if ($sample_id) {
+        $whereClause .= " AND sample_id = :sample_id";
+        $params[':sample_id'] = $sample_id;
     }
     
-    $checkStmt = $connect->prepare($checkQuery);
-    $checkStmt->execute($checkParams);
+    // Verify request exists and is pending
+    $checkStmt = $connect->prepare("
+        SELECT * FROM pending_requests 
+        WHERE {$whereClause} AND status = 'Pending'
+        LIMIT 1
+    ");
+    $checkStmt->execute($params);
+    $request = $checkStmt->fetch(PDO::FETCH_ASSOC);
     
-    if ($checkStmt->fetchColumn() > 0) {
-        throw new Exception('This request is already approved');
-    }
-
-    // 2. Update status in pending_requests
-    $updateQuery = "UPDATE pending_requests 
-                   SET status = 'Approved'
-                   WHERE patient_id = ?";
-    
-    $updateParams = [$patientId];
-    
-    if ($sampleId) {
-        $updateQuery .= " AND sample_id = ?";
-        $updateParams[] = $sampleId;
+    if (!$request) {
+        throw new Exception('No pending request found matching these criteria');
     }
     
-    $updateStmt = $connect->prepare($updateQuery);
-    $updateStmt->execute($updateParams);
-    
-    if ($updateStmt->rowCount() === 0) {
-        throw new Exception('No matching pending request found');
+    // Process based on action
+    if ($action === 'approve') {
+        // Update request status to Approved
+        $updateStmt = $connect->prepare("
+            UPDATE pending_requests 
+            SET status = 'Approved',
+                processed_at = NOW(),
+                processed_by = :user_id
+            WHERE {$whereClause}
+        ");
+        
+        $updateParams = $params;
+        $updateParams[':user_id'] = $user_id;
+        
+        $updateStmt->execute($updateParams);
+        
+        // Also insert into request_list for compatibility with existing code
+        // This is to maintain backward compatibility with any code that might be using the request_list table
+        $insertStmt = $connect->prepare("
+            INSERT INTO request_list (
+                patient_id, sample_id, patient_name, 
+                station_ward, gender, age, birth_date, 
+                request_date, test_name, clinical_info, 
+                physician, status, created_at
+            ) VALUES (
+                :patient_id, :sample_id, :patient_name, 
+                :station_ward, :gender, :age, :birth_date, 
+                :request_date, :test_name, :clinical_info, 
+                :physician, 'Approved', NOW()
+            )
+            ON DUPLICATE KEY UPDATE
+                status = 'Approved',
+                updated_at = NOW()
+        ");
+        
+        $insertParams = [
+            ':patient_id' => $request['patient_id'],
+            ':sample_id' => $request['sample_id'],
+            ':patient_name' => $request['full_name'],
+            ':station_ward' => $request['station'] ?? $request['station_ward'] ?? '',
+            ':gender' => $request['gender'],
+            ':age' => $request['age'],
+            ':birth_date' => $request['birth_date'],
+            ':request_date' => $request['date'],
+            ':test_name' => $request['test_name'],
+            ':clinical_info' => $request['clinical_info'] ?? '',
+            ':physician' => $request['physician'] ?? ''
+        ];
+        
+        $insertStmt->execute($insertParams);
+        
+        $message = 'Request approved successfully';
+    } 
+    else if ($action === 'reject') {
+        // Validate rejection reason
+        if (empty($_POST['reject_reason'])) {
+            throw new Exception('Rejection reason is required');
+        }
+        
+        $reject_reason = trim($_POST['reject_reason']);
+        
+        // Update request status to Rejected
+        $updateStmt = $connect->prepare("
+            UPDATE pending_requests 
+            SET status = 'Rejected',
+                processed_at = NOW(),
+                processed_by = :user_id,
+                reject_reason = :reject_reason
+            WHERE {$whereClause}
+        ");
+        
+        $updateParams = $params;
+        $updateParams[':user_id'] = $user_id;
+        $updateParams[':reject_reason'] = $reject_reason;
+        
+        $updateStmt->execute($updateParams);
+        
+        // Optionally, also log to rejected_requests table for reporting
+        $logStmt = $connect->prepare("
+            INSERT INTO rejected_requests (
+                request_id, patient_id, sample_id, rejection_reason, 
+                rejected_by, rejected_at
+            ) VALUES (
+                :request_id, :patient_id, :sample_id, :rejection_reason,
+                :rejected_by, NOW()
+            )
+        ");
+        
+        // Only execute if the rejected_requests table exists
+        try {
+            $logParams = [
+                ':request_id' => $request['id'],
+                ':patient_id' => $request['patient_id'],
+                ':sample_id' => $request['sample_id'],
+                ':rejection_reason' => $reject_reason,
+                ':rejected_by' => $user_id
+            ];
+            
+            $logStmt->execute($logParams);
+        } catch (PDOException $e) {
+            // Table might not exist, just continue
+        }
+        
+        $message = 'Request rejected successfully';
     }
-    
-    // 3. Insert into request_list (only if not already exists)
-    $insertQuery = "INSERT INTO request_list 
-                   (patient_id, sample_id, patient_name, station_ward, 
-                    gender, age, birth_date, test_name, request_date, status)
-                   SELECT 
-                   patient_id, sample_id, full_name, station, 
-                   gender, age, birth_date, test_name, date, 'Approved'
-                   FROM pending_requests 
-                   WHERE patient_id = ?";
-    
-    $insertParams = [$patientId];
-    
-    if ($sampleId) {
-        $insertQuery .= " AND sample_id = ?";
-        $insertParams[] = $sampleId;
+    else {
+        throw new Exception('Invalid action specified');
     }
-    
-    // Add NOT EXISTS check to prevent duplicates
-    $insertQuery .= " AND NOT EXISTS (
-        SELECT 1 FROM request_list 
-        WHERE patient_id = ?";
-    
-    $insertParams[] = $patientId;
-    
-    if ($sampleId) {
-        $insertQuery .= " AND sample_id = ?";
-        $insertParams[] = $sampleId;
-    }
-    
-    $insertQuery .= ")";
-    
-    $insertStmt = $connect->prepare($insertQuery);
-    $insertStmt->execute($insertParams);
     
     $connect->commit();
     
-    echo json_encode(['success' => true]);
-
+    echo json_encode([
+        'success' => true,
+        'message' => $message,
+        'data' => [
+            'patient_id' => $patient_id,
+            'sample_id' => $sample_id,
+            'status' => $action === 'approve' ? 'Approved' : 'Rejected'
+        ]
+    ]);
+    
 } catch (Exception $e) {
     if (isset($connect) && $connect->inTransaction()) {
         $connect->rollBack();
     }
     
+    error_log("Process Request Error: " . $e->getMessage());
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage()

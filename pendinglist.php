@@ -18,9 +18,8 @@ $offset = ($page - 1) * $recordsPerPage;
 try {
     // Get total count of pending requests
     $countStmt = $connect->prepare("
-        SELECT COUNT(*) 
-        FROM pending_requests 
-        WHERE status = 'Pending'
+    SELECT COUNT(*) 
+    FROM pending_requests
     ");
     $countStmt->execute();
     $totalPending = $countStmt->fetchColumn();
@@ -32,7 +31,6 @@ try {
     SELECT pr.*, p.gender, p.age, p.birth_date
     FROM pending_requests pr
     LEFT JOIN patients p ON pr.patient_id = p.patient_id
-    WHERE pr.status = 'Pending'
     ORDER BY pr.date DESC
     LIMIT :limit OFFSET :offset
 ");
@@ -129,7 +127,15 @@ try {
             <div class="mb-3">
                 <input type="text" id="searchPending" class="form-control" placeholder="Search pending requests...">
             </div>
-
+            <div class="mb-3">
+                <label for="statusFilter" class="form-label">Filter by Status:</label>
+                <select id="statusFilter" class="form-select w-25">
+                    <option value="all">All Requests</option>
+                    <option value="Pending" selected>Pending</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Rejected">Rejected</option>
+                </select>
+            </div>
             <table id="pendingTable" class="table table-striped table-hover table-bordered">
                 <thead class="table-dark">
                     <tr>
@@ -158,26 +164,48 @@ try {
                             <td><?= htmlspecialchars($row['age']) ?></td>
                             <td><?= htmlspecialchars($row['test_name']) ?></td>
                             <td>
-                                <span class="badge bg-warning text-dark"><?= htmlspecialchars($row['status']) ?></span>
+                                <?php if($row['status'] == 'Pending'): ?>
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                <?php elseif($row['status'] == 'Approved'): ?>
+                                    <span class="badge bg-success">Approved</span>
+                                <?php elseif($row['status'] == 'Rejected'): ?>
+                                    <span class="badge bg-danger">Rejected</span>
+                                    <?php if(!empty($row['reject_reason'])): ?>
+                                        <i class="bi bi-info-circle" data-bs-toggle="tooltip" title="<?= htmlspecialchars($row['reject_reason']) ?>"></i>
+                                    <?php endif; ?>
+                                <?php endif; ?>
                             </td>
                             <td>
-                                <button class="btn btn-sm btn-info view-btn" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#viewRequestModal"
-                                        data-id="<?= $row['request_id'] ?? '' ?>"
-                                        data-patient-id="<?= htmlspecialchars($row['patient_id'] ?? '') ?>"
-                                        data-sample-id="<?= htmlspecialchars($row['sample_id'] ?? '') ?>"
-                                        data-name="<?= htmlspecialchars($row['full_name'] ?? '') ?>"
-                                        data-station="<?= htmlspecialchars($row['station'] ?? '') ?>"
-                                        data-gender="<?= htmlspecialchars($row['gender'] ?? '') ?>"
-                                        data-age="<?= htmlspecialchars($row['age'] ?? '') ?>"
-                                        data-birth-date="<?= htmlspecialchars($row['birth_date'] ?? '') ?>"
-                                        data-test-name="<?= htmlspecialchars($row['test_name'] ?? '') ?>"
-                                        data-clinical-info="<?= htmlspecialchars($row['clinical_info'] ?? '') ?>"
-                                        data-physician="<?= htmlspecialchars($row['physician'] ?? '') ?>"
-                                        data-date="<?= htmlspecialchars($row['date'] ?? '') ?>">
-                                    View Request
-                                </button>
+                                <?php if($row['status'] == 'Pending'): ?>
+                                    <button class="btn btn-sm btn-info view-btn" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#viewRequestModal"
+                                            data-id="<?= $row['request_id'] ?? '' ?>"
+                                            data-patient-id="<?= htmlspecialchars($row['patient_id'] ?? '') ?>"
+                                            data-sample-id="<?= htmlspecialchars($row['sample_id'] ?? '') ?>"
+                                            data-name="<?= htmlspecialchars($row['full_name'] ?? '') ?>"
+                                            data-station="<?= htmlspecialchars($row['station'] ?? '') ?>"
+                                            data-gender="<?= htmlspecialchars($row['gender'] ?? '') ?>"
+                                            data-age="<?= htmlspecialchars($row['age'] ?? '') ?>"
+                                            data-birth-date="<?= htmlspecialchars($row['birth_date'] ?? '') ?>"
+                                            data-test-name="<?= htmlspecialchars($row['test_name'] ?? '') ?>"
+                                            data-clinical-info="<?= htmlspecialchars($row['clinical_info'] ?? '') ?>"
+                                            data-physician="<?= htmlspecialchars($row['physician'] ?? '') ?>"
+                                            data-date="<?= htmlspecialchars($row['date'] ?? '') ?>">
+                                        View Request
+                                    </button>
+                                <?php else: ?>
+                                    <button class="btn btn-sm btn-secondary view-details-btn" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#viewDetailsModal"
+                                            data-id="<?= $row['request_id'] ?? '' ?>"
+                                            data-status="<?= htmlspecialchars($row['status'] ?? '') ?>"
+                                            data-processed-by="<?= htmlspecialchars($row['processed_by'] ?? '') ?>"
+                                            data-processed-at="<?= htmlspecialchars($row['processed_at'] ?? '') ?>"
+                                            data-reject-reason="<?= htmlspecialchars($row['reject_reason'] ?? '') ?>">
+                                        View Details
+                                    </button>
+                                <?php endif; ?>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -626,6 +654,24 @@ $('#searchPending').on('keyup', function() {
     $('#pendingTableBody tr').filter(function() {
         $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
     });
+});
+
+// for filtering sa table 
+document.getElementById('statusFilter').addEventListener('change', function() {
+    const status = this.value;
+    const rows = document.querySelectorAll('#pendingTableBody tr');
+    
+    rows.forEach(row => {
+        if (status === 'all') {
+            row.style.display = '';
+        } else {
+            const statusCell = row.querySelector('td:nth-child(9)').textContent.trim();
+            row.style.display = statusCell.includes(status) ? '' : 'none';
+        }
+    });
+    
+    const visibleRows = document.querySelectorAll('#pendingTableBody tr:not([style*="display: none"])').length;
+    document.querySelector('.record-count').textContent = `Visible Requests: ${visibleRows} (Total: ${rows.length})`;
 });
 </script>
 </body>
