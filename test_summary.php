@@ -68,37 +68,16 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Test Summary</title>
 
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="assets/css/dashboard.css">
 
     <style>
         body {
             margin: 0;
+            padding: 0;
             font-family: Arial, sans-serif;
-        }
-
-        /* Sidebar Styles */
-        .sidebar {
-            height: 100vh;
-            width: 250px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background-color: #f8f9fa;
-            padding-top: 20px;
-        }
-
-        .sidebar a {
-            text-decoration: none;
-            color: #000;
-            padding: 10px 15px;
-            display: block;
-        }
-
-        .sidebar a:hover {
-            background-color: #dc3545;
-            color: white;
+            background-color: #f1f1f1;
         }
 
         .main-content {
@@ -122,14 +101,15 @@ try {
 
         header {
             background-color: #f8f9fa;
-            padding: 10px 20px;
+            padding: 10px 30px;
+            text-align: right;
             position: fixed;
-            top: 0;
-            left: 250px;
             width: calc(100% - 250px);
+            top: 0;
             z-index: 1000;
+            left: 250px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-
         header a {
             color: #dc3545;
             text-decoration: none;
