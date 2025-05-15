@@ -143,9 +143,10 @@ try {
                 Total Patients: <span id="patientCount"><?= $totalPatients ?></span>
             </div>
 
-            <!-- Add Patient Button: Trigger Modal -->
+            <?php if ($role === 'admin'): ?>
             <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addModal">Add Patient</button>
-
+            <?php endif; ?>
+            
             <!-- Search Bar -->
             <div class="mb-3">
                 <input type="text" id="searchInput" class="form-control" placeholder="Search patients...">
